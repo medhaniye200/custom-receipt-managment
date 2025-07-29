@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  userId: string;
+  roles: string[];
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,19 +27,40 @@ export default function LoginPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ username, password }),
         }
       );
 
       const data = await response.json();
-
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      // Save token or user info if needed
-      localStorage.setItem("token", data.token); // Adjust according to backend response
-      router.push("/companies/"); // Redirect to dashboard
+      // Store token
+      localStorage.setItem("token", data.token);
+
+      // Decode JWT token
+      const decoded = jwtDecode<JwtPayload>(data.token);
+
+      const { userId, roles } = decoded;
+      localStorage.setItem("userId", userId);
+      localStorage.setItem("roles", JSON.stringify(roles));
+
+      // Redirect based on role
+      if (roles.includes("CLERK")) {
+        router.push("/declaration");
+      } else if (roles.includes("ACCOUNTANT")) {
+        router.push("/accountant-dashboard");
+      } else if (roles.includes("USER")) {
+        router.push("/user-dashboard");
+      } else {
+        router.push("/");
+      }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Login error:", err);
+      setError(err.message || "Login failed");
+
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("roles");
     } finally {
       setLoading(false);
     }
@@ -48,10 +75,10 @@ export default function LoginPage() {
         <h2 className="text-xl font-bold">Login</h2>
         {error && <p className="text-red-500">{error}</p>}
         <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Username"
           required
           className="w-full p-2 border rounded"
         />

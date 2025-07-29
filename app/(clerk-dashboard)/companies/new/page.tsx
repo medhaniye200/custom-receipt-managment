@@ -1,5 +1,5 @@
 "use client";
-import CompanyForm from "@/components/CompanyForm";
+import CompanyForm from "../../components/CompanyForm";
 import type { CompanyFormData } from "@/lib/types"; // Adjust if path is different
 
 export default function CreateCompany() {
