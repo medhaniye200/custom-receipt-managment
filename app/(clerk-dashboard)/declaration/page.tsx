@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
-'use client'
->>>>>>> 4493575 ( update message here)
+"use client";
 import DeclarationForm from "../components/DeclarationForm";
 
 export default function CreateDeclarationPage() {

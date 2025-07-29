@@ -7,16 +7,9 @@ const navItems = [
   { href: "/declaration", label: "Declaration" },
   { href: "/items", label: "Items" },
   { href: "/warehouse-fee", label: "Warehouse Fee" },
-<<<<<<< HEAD
-  { href: "/custom-clearance", label: "Custom Clearance" },
-
-  { href: "/bank-service", label: "Bank Service" },
-=======
   { href: "/custem-clearance", label: "Custom Clearance" },
   { href: "/bank-service", label: "Bank Service" },
   { href: "/commercial-invoice", label: "commercial invoice" },
-
->>>>>>> 4493575 ( update message here)
 ];
 
 export default function ClerkDashboardLayout({

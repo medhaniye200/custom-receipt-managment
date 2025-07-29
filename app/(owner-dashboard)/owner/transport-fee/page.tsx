@@ -1,0 +1,11 @@
+"use client";
+import ReceiptUpload from "../components/transportReceipt";
+
+export default function UploadPage() {
+  return (
+    <main className="min-h-screen bg-gray-100 p-4">
+      <h1> hello Mergeta Medhaniye</h1>
+      <ReceiptUpload />
+    </main>
+  );
+}
