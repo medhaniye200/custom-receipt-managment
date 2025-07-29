@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 
 interface JwtPayload {
-  userId: string;
+  user_id: string;
   roles: string[];
 }
 
@@ -26,21 +26,24 @@ export default function LoginPage() {
         "https://customreceiptmanagement.onrender.com/api/v1/auth/login",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({ username, password }),
         }
       );
 
       const data = await response.json();
+
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      // Store token
-      localStorage.setItem("token", data.token);
+      const token = data.token;
+      localStorage.setItem("token", token);
 
-      // Decode JWT token
-      const decoded = jwtDecode<JwtPayload>(data.token);
+      const decoded = jwtDecode<JwtPayload>(token);
+      const userId = decoded.user_id;
+      const roles = decoded.roles;
 
-      const { userId, roles } = decoded;
       localStorage.setItem("userId", userId);
       localStorage.setItem("roles", JSON.stringify(roles));
 
@@ -58,9 +61,10 @@ export default function LoginPage() {
       console.error("Login error:", err);
       setError(err.message || "Login failed");
 
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("roles");
+      // Clear token info
+      // localStorage.removeItem("token");
+      // localStorage.removeItem("userId");
+      // localStorage.removeItem("roles");
     } finally {
       setLoading(false);
     }

@@ -4,16 +4,11 @@ import { useState } from "react";
 
 export default function BankServiceChargeForm() {
   const [formData, setFormData] = useState({
-    bankName: "",
+    bankName: "", // From seller profile
     bankPermitDate: "",
     bankPermitNo: "",
     bankPermitAmount: "",
-    invoiceDate: "",
-    invoiceNo: "",
-    invoiceAmount: "",
     serviceType: "",
-    serviceAmount: "",
-    serviceDate: "",
     bankReference: "",
   });
 
@@ -24,13 +19,16 @@ export default function BankServiceChargeForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Bank Service Charge Data:", formData);
-    // TODO: POST to API
+    console.log("Submitted Bank Service Charge:", formData);
+    // TODO: Submit to backend
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 max-w-4xl mx-auto bg-white shadow rounded space-y-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">Bank Service Charge</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="p-6 max-w-3xl mx-auto bg-white shadow rounded space-y-6"
+    >
+      <h2 className="text-2xl font-bold text-center">Bank Service Charge</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Bank Name */}
@@ -46,9 +44,9 @@ export default function BankServiceChargeForm() {
           />
         </div>
 
-        {/* Bank Permit */}
+        {/* Bank Permit Date */}
         <div>
-          <label className="block font-medium mb-1">Permit Date</label>
+          <label className="block font-medium mb-1">Bank Permit Date</label>
           <input
             type="date"
             name="bankPermitDate"
@@ -58,8 +56,9 @@ export default function BankServiceChargeForm() {
           />
         </div>
 
+        {/* Bank Permit No */}
         <div>
-          <label className="block font-medium mb-1">Permit No.</label>
+          <label className="block font-medium mb-1">Bank Permit No.</label>
           <input
             type="text"
             name="bankPermitNo"
@@ -69,8 +68,9 @@ export default function BankServiceChargeForm() {
           />
         </div>
 
+        {/* Bank Permit Amount */}
         <div>
-          <label className="block font-medium mb-1">Permit Amount</label>
+          <label className="block font-medium mb-1">Bank Permit Amount</label>
           <input
             type="number"
             name="bankPermitAmount"
@@ -80,42 +80,8 @@ export default function BankServiceChargeForm() {
           />
         </div>
 
-        {/* Commercial Invoice */}
-        <div>
-          <label className="block font-medium mb-1">Invoice Date</label>
-          <input
-            type="date"
-            name="invoiceDate"
-            value={formData.invoiceDate}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Invoice No.</label>
-          <input
-            type="text"
-            name="invoiceNo"
-            value={formData.invoiceNo}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Invoice Amount</label>
-          <input
-            type="number"
-            name="invoiceAmount"
-            value={formData.invoiceAmount}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        {/* Service Info */}
-        <div>
+        {/* Service Type */}
+        <div className="md:col-span-2">
           <label className="block font-medium mb-1">Service Type</label>
           <input
             type="text"
@@ -123,31 +89,11 @@ export default function BankServiceChargeForm() {
             value={formData.serviceType}
             onChange={handleChange}
             className="w-full border p-2 rounded"
+            placeholder="e.g. Bank Transfer, SWIFT Fee"
           />
         </div>
 
-        <div>
-          <label className="block font-medium mb-1">Service Amount</label>
-          <input
-            type="number"
-            name="serviceAmount"
-            value={formData.serviceAmount}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Service Date</label>
-          <input
-            type="date"
-            name="serviceDate"
-            value={formData.serviceDate}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
+        {/* Bank Reference */}
         <div className="md:col-span-2">
           <label className="block font-medium mb-1">Bank Reference</label>
           <input

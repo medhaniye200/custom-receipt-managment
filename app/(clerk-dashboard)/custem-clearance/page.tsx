@@ -1,6 +1,6 @@
 "use client";
 
-import CustomClearanceForm from "@/components/CustomClearanceForm";
+import CustomClearanceForm from "../components/CustomClearanceForm";
 
 export default function CustomClearancePage() {
   return (
