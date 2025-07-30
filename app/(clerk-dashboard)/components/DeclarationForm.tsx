@@ -42,6 +42,7 @@ type FormData = {
   djibouticost: number;
   othercost1: number;
   itemManagementdto: ItemManagementDto[];
+  taxApplicationdto: TaxDto[];
 };
 
 const TAX_OPTIONS = [
@@ -277,17 +278,18 @@ function ItemRow({
 export default function DeclarationForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-    custombranchname: "",
-    declarationnumber: "",
-    declarationdispensedate: "",
-    fobamountusdt: 0,
-    exchangerate: 0,
-    externalfreight: 0,
-    insuranceCost: 0,
-    inlandfreight1: 0,
-    djibouticost: 0,
-    othercost1: 0,
-    itemManagementdto: [],
+  custombranchname: "",
+  declarationnumber: "",
+  declarationdispensedate: "",
+  fobamountusdt: 0,
+  exchangerate: 0,
+  externalfreight: 0,
+  insuranceCost: 0,
+  inlandfreight1: 0,  // Consistent spelling
+  djibouticost: 0,
+  othercost1: 0,
+  itemManagementdto: [],
+  taxApplicationdto: []  // Initialize tax array
   });
 
   const [loading, setLoading] = useState(false);
@@ -406,134 +408,107 @@ export default function DeclarationForm() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      // Validate form before submission
-      validateForm();
+  try {
+    validateForm();
 
-      // Verify authentication
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userId");
-      const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
 
-      if (!token || !userId) {
-        throw new Error("Session expired. Please log in again.");
-      }
-
-      if (!roles.includes("CLERK")) {
-        throw new Error("You don't have permission to submit declarations.");
-      }
-
-      // Prepare submission data
-      const submissionData = {
-        custombranchname: formData.custombranchname,
-        declarationnumber: formData.declarationnumber,
-        declarationdispensedate: formData.declarationdispensedate,
-        fobamountusdt: Number(formData.fobamountusdt),
-        exchangerate: Number(formData.exchangerate),
-        externalfreight: Number(formData.externalfreight),
-        insuranceCost: Number(formData.insuranceCost),
-        inlandfreight1: Number(formData.inlandfreight1),
-        djibouticost: Number(formData.djibouticost),
-        othercost1: Number(formData.othercost1),
-        itemManagementdto: formData.itemManagementdto.map((item) => ({
-          hscode: item.hscode,
-          itemdescription: item.itemdescription,
-          unitofmeasurement: item.unitofmeasurement,
-          quantity: Number(item.quantity),
-          unitCost: Number(item.unitCost),
-          taxApplicationdto: item.taxApplicationdto.map((tax) => ({
-            name: tax.name,
-            value: Number(tax.value),
-            codename: tax.codename,
-          })),
-        })),
-      };
-
-      // Make API request
-      const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${userId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(submissionData),
-        }
-      );
-      alert("Declaration submitted successfully!");
-
-      // Handle response
-      // const responseText = await response.text();
-      // let responseBody;
-
-      // try {
-      //   responseBody = JSON.parse(responseText);
-      // } catch {
-      //   responseBody = responseText;
-      // }
-
-      // if (!response.ok) {
-      //   console.error("API Error Details:", {
-      //     status: response.status,
-      //     statusText: response.statusText,
-      //     body: responseBody,
-      //   });
-
-      //   let errorMessage = "Submission failed";
-      //   if (response.status === 403) {
-      //     errorMessage = "Access denied. Please verify your permissions.";
-      //   } else if (typeof responseBody === "object" && responseBody.message) {
-      //     errorMessage = responseBody.message;
-      //   } else if (typeof responseBody === "string") {
-      //     errorMessage = responseBody;
-      //   } else {
-      //     errorMessage = `${errorMessage} (Status: ${response.status})`;
-      //   }
-
-      //   throw new Error(errorMessage);
-      // }
-
-      // // Success case
-      // alert("Declaration submitted successfully!");
-      // console.log("API Response:", responseBody);
-
-      // Reset form
-      setFormData({
-        custombranchname: "",
-        declarationnumber: "",
-        declarationdispensedate: "",
-        fobamountusdt: 0,
-        exchangerate: 0,
-        externalfreight: 0,
-        insuranceCost: 0,
-        inlandfreight1: 0,
-        djibouticost: 0,
-        othercost1: 0,
-        itemManagementdto: [],
-      });
-    } catch (err: any) {
-      console.error("Error:", err);
-      setError(err.message);
-
-      if (
-        err.message.includes("expired") ||
-        err.message.includes("permission")
-      ) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("roles");
-        router.push("/companies");
-      }
-    } finally {
-      setLoading(false);
+    if (!token || !userId) {
+      throw new Error("Session expired. Please log in again.");
     }
-  };
+
+    if (!roles.includes("CLERK")) {
+      throw new Error("You don't have permission to submit declarations.");
+    }
+
+    // Prepare submission data with taxes separate from items
+    const submissionData = {
+      custombranchname: formData.custombranchname,
+      declarationnumber: formData.declarationnumber,
+      declarationdispensedate: formData.declarationdispensedate,
+      fobamountusdt: Number(formData.fobamountusdt),
+      exchangerate: Number(formData.exchangerate),
+      externalfreight: Number(formData.externalfreight),
+      insuranceCost: Number(formData.insuranceCost),
+      inlandfreight1: Number(formData.inlandfreight1),
+      djibouticost: Number(formData.djibouticost),
+      othercost1: Number(formData.othercost1),
+      itemManagementdto: formData.itemManagementdto.map(item => ({
+        hscode: item.hscode,
+        itemdescription: item.itemdescription,
+        unitofmeasurement: item.unitofmeasurement,
+        quantity: Number(item.quantity),
+        unitCost: Number(item.unitCost),
+        // Note: We're not including item-level taxes here
+      })),
+      // Taxes sent separately
+      taxApplicationdto: formData.taxApplicationdto.map(tax => ({
+        name: tax.name,
+        value: Number(tax.value),
+        codename: tax.codename,
+      })),
+    };
+
+    console.log("Full Submission Data:", submissionData);
+
+    const response = await fetch(
+      `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(submissionData),
+      }
+    );
+
+    const responseData = await response.text();
+    console.log("API Response:", responseData);
+
+    if (!response.ok) {
+      throw new Error(responseData || "Submission failed");
+    }
+
+    alert("Declaration submitted successfully!");
+    
+    // Reset form
+    setFormData({
+      custombranchname: "",
+      declarationnumber: "",
+      declarationdispensedate: "",
+      fobamountusdt: 0,
+      exchangerate: 0,
+      externalfreight: 0,
+      insuranceCost: 0,
+      inlandfreight1: 0,
+      djibouticost: 0,
+      othercost1: 0,
+      itemManagementdto: [],
+      taxApplicationdto: [{ name: "VAT", value: 15, codename: "VAT15" }],
+    });
+
+  } catch (err: any) {
+    console.error("Submission Error:", err);
+    setError(err.message || "Failed to submit declaration");
+    
+    if (err.message.includes("expired") || err.message.includes("permission")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("roles");
+      router.push("/companies");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="w-full max-w-[100vw] px-2 md:px-4 overflow-hidden">

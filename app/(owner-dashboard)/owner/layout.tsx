@@ -10,7 +10,7 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
-export default function ClerkDashboardLayout({
+export default function ownerDashboardLayout({
   children,
 }: {
   children: React.ReactNode;

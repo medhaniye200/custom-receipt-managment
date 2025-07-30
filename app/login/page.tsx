@@ -39,7 +39,7 @@ export default function LoginPage() {
 
       const token = data.token;
       localStorage.setItem("token", token);
-
+      
       const decoded = jwtDecode<JwtPayload>(token);
       const userId = decoded.user_id;
       const roles = decoded.roles;
@@ -53,7 +53,7 @@ export default function LoginPage() {
       } else if (roles.includes("ACCOUNTANT")) {
         router.push("/accountant-dashboard");
       } else if (roles.includes("USER")) {
-        router.push("/user-dashboard");
+        router.push("/owner");
       } else {
         router.push("/");
       }
