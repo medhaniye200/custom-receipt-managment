@@ -1,15 +1,15 @@
-// app/(clerk-dashboard)/layout.tsx
+"use client";
+import { useState } from "react";
 import Link from "next/link";
 
 const navItems = [
   { href: "/companies", label: "Companies" },
-  // { href: "/components", label: "Components" },
   { href: "/declaration", label: "Declaration" },
   { href: "/items", label: "Items" },
   { href: "/warehouse-fee", label: "Warehouse Fee" },
   { href: "/custem-clearance", label: "Custom Clearance" },
   { href: "/bank-service", label: "Bank Service" },
-  { href: "/commercial-invoice", label: "commercial invoice" },
+  { href: "/commercial-invoice", label: "Commercial Invoice" },
 ];
 
 export default function ClerkDashboardLayout({
@@ -17,6 +17,8 @@ export default function ClerkDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [showDocuments, setShowDocuments] = useState(false);
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -32,6 +34,42 @@ export default function ClerkDashboardLayout({
               {label}
             </Link>
           ))}
+
+          {/* Documents Dropdown */}
+          <button
+            onClick={() => setShowDocuments(!showDocuments)}
+            className="block text-left px-3 py-2 rounded hover:bg-gray-700 transition focus:outline-none"
+          >
+            Documents ▾
+          </button>
+          {showDocuments && (
+            <div className="ml-4 space-y-2">
+              <Link
+                href="/documentsViewer"
+                className="block px-3 py-1 rounded hover:bg-gray-700 text-sm"
+              >
+                custom
+              </Link>
+              <Link
+                href="/wareHouseFileViewer"
+                className="block px-3 py-1 rounded hover:bg-gray-700 text-sm"
+              >
+                wareHouse
+              </Link>
+              <Link
+                href="/transportFileViewer"
+                className="block px-3 py-1 rounded hover:bg-gray-700 text-sm"
+              >
+                transport
+              </Link>
+              <Link
+                href="/clearanceFileViewer"
+                className="block px-3 py-1 rounded hover:bg-gray-700 text-sm"
+              >
+                clearance{" "}
+              </Link>
+            </div>
+          )}
         </nav>
       </aside>
 
