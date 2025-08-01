@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { AtSign, File, Download, X, Eye } from "lucide-react";
+import { AtSign, File, Download, X, Eye, ChevronDown } from "lucide-react";
 
 // The data structure returned by the API
 interface RawWarehouseFile {
@@ -219,6 +219,9 @@ export default function WarehouseFileViewer() {
   const [modalFileUrl, setModalFileUrl] = useState("");
   const [modalFileLabel, setModalFileLabel] = useState("");
 
+  // New state to track expanded users
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+
   const openPreviewModal = (url: string, label: string) => {
     setModalFileUrl(url);
     setModalFileLabel(label);
@@ -229,6 +232,19 @@ export default function WarehouseFileViewer() {
     setModalOpen(false);
     setModalFileUrl("");
     setModalFileLabel("");
+  };
+
+  // New function to toggle the expanded state
+  const toggleExpand = (userId: string) => {
+    setExpandedUsers((prevExpandedUsers) => {
+      const newSet = new Set(prevExpandedUsers);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
   };
 
   useEffect(() => {
@@ -269,7 +285,6 @@ export default function WarehouseFileViewer() {
             };
           }
 
-          // Dynamically add documents based on the API response structure
           if (item.imageBaseMainReceipt) {
             grouped[userId].documents.push({
               label: `${item.maintype} Receipt`,
@@ -307,7 +322,6 @@ export default function WarehouseFileViewer() {
         setLoading(false);
       }
     };
-
     fetchFiles();
   }, []);
 
@@ -358,41 +372,55 @@ export default function WarehouseFileViewer() {
           No warehouse documents available.
         </p>
       ) : (
-        userDocuments.map((user, index) => (
+        userDocuments.map((user) => (
           <div
-            key={index}
-            className="bg-white rounded-lg shadow-lg p-6 mb-10 border border-gray-100"
+            key={user.userId}
+            className="bg-white rounded-lg shadow-lg p-6 mb-6 border border-gray-100"
           >
-            <h3 className="text-2xl font-bold mb-4 text-purple-700 border-b pb-2">
-              {user.firstName} {user.lastname}
-            </h3>
-            <p className="text-gray-700 mb-4">
-              <strong>Company:</strong> {user.companyName}
-            </p>
-            <p className="text-gray-700 mb-1">
-              <strong>TIN Number:</strong> {user.tinNumber}
-            </p>
-
-            <p className="text-gray-700 mb-1">
-              <strong>User ID:</strong>{" "}
-              <span className="font-mono text-sm">{user.userId}</span>
-            </p>
-
-            {user.documents.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
-                {user.documents.map((doc, docIndex) => (
-                  <FilePreview
-                    key={docIndex}
-                    label={doc.label}
-                    url={doc.base64Data}
-                    onPreviewClick={openPreviewModal}
-                  />
-                ))}
+            {/* The main button to toggle the view */}
+            <button
+              onClick={() => toggleExpand(user.userId)}
+              className="w-full flex justify-between items-center text-left py-4 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+            >
+              <div>
+                <div className="flex items-center gap-4">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {user.companyName}
+                  </h3>
+                  <span className="text-sm text-gray-500 font-medium">
+                    (TIN: {user.tinNumber})
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm mt-1">
+                  User: {user.firstName} {user.lastname}
+                </p>
               </div>
-            ) : (
-              <p className="text-gray-600 italic mt-4 text-center py-4 border-t border-gray-200">
-                No specific files uploaded for this user.
-              </p>
+              <ChevronDown
+                className={`text-gray-400 transition-transform duration-300 ${
+                  expandedUsers.has(user.userId) ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {/* The collapsible content section */}
+            {expandedUsers.has(user.userId) && (
+              <div className="pt-4 border-t mt-4">
+                {user.documents.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+                    {user.documents.map((doc, docIndex) => (
+                      <FilePreview
+                        key={docIndex}
+                        label={doc.label}
+                        url={doc.base64Data}
+                        onPreviewClick={openPreviewModal}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600 italic text-center py-4">
+                    No specific files uploaded for this user.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         ))

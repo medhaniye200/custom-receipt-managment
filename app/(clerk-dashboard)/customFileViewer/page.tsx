@@ -1,4 +1,4 @@
-import CustomFileViewer from "../components/documentsViewer";
+import CustomFileViewer from "../components/customFileViewer";
 
 export default function Page() {
   return (

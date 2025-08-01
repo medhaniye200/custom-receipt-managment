@@ -3,18 +3,7 @@
 import { useRouter } from "next/navigation"; // ✅ for App Router
 import { useState } from "react";
 
-// Types
-type FormItem = {
-  itemDescription: string;
-  unitOfMeasurement: string;
-  units: string;
-  quantity: string;
-  unitCost: string;
-  dpvAmount: string;
-  taxType: string[];
-};
-
-// Type definitions
+// --- Type Definitions ---
 type TaxDto = {
   name: string;
   value: number;
@@ -45,13 +34,19 @@ type FormData = {
   taxApplicationdto: TaxDto[];
 };
 
+// --- Tax Options ---
 const TAX_OPTIONS = [
-  { name: "VAT", value: 15.0, codename: "VAT15" },
-  { name: "Excise Tax", value: 10.0, codename: "EXC10" },
-  { name: "Withholding Tax", value: 2.0, codename: "WHT2" },
-  { name: "Customs Duty", value: 5.0, codename: "CUSD5" },
+  { name: "DutyTax", value: 10.0, codename: "DutyTax" },
+  { name: "ExciseTax", value: 10.0, codename: "ExciseTax" },
+  { name: "Surtax", value: 2.0, codename: "Surtax" },
+  { name: "SocialWelfareTax", value: 1.0, codename: "SocialWelfareTax" },
+  { name: "VAT", value: 15.0, codename: "VAT" },
+  { name: "WITHHOLDINGTAX", value: 2.0, codename: "WITHHOLDINGTAX" },
+  { name: "ScanningFee", value: 100.0, codename: "ScanningFee" },
+  { name: "ScanningFeeVAT", value: 15.0, codename: "ScanningFeeVAT" },
 ];
 
+// --- Helper Components ---
 function InputField({
   label,
   name,
@@ -275,21 +270,24 @@ function ItemRow({
   );
 }
 
+// --- Main Form Component ---
 export default function DeclarationForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
-  custombranchname: "",
-  declarationnumber: "",
-  declarationdispensedate: "",
-  fobamountusdt: 0,
-  exchangerate: 0,
-  externalfreight: 0,
-  insuranceCost: 0,
-  inlandfreight1: 0,  // Consistent spelling
-  djibouticost: 0,
-  othercost1: 0,
-  itemManagementdto: [],
-  taxApplicationdto: []  // Initialize tax array
+    custombranchname: "",
+    declarationnumber: "",
+    declarationdispensedate: "",
+    fobamountusdt: 0,
+    exchangerate: 0,
+    externalfreight: 0,
+    insuranceCost: 0,
+    inlandfreight1: 0,
+    djibouticost: 0,
+    othercost1: 0,
+    itemManagementdto: [],
+    taxApplicationdto: [
+      { name: "VAT", value: 15, codename: "VAT" },
+    ],
   });
 
   const [loading, setLoading] = useState(false);
@@ -408,107 +406,105 @@ export default function DeclarationForm() {
     });
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  try {
-    validateForm();
+    try {
+      validateForm();
 
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+      const roles = JSON.parse(localStorage.getItem("roles") || "[]");
 
-    if (!token || !userId) {
-      throw new Error("Session expired. Please log in again.");
-    }
-
-    if (!roles.includes("CLERK")) {
-      throw new Error("You don't have permission to submit declarations.");
-    }
-
-    // Prepare submission data with taxes separate from items
-    const submissionData = {
-      custombranchname: formData.custombranchname,
-      declarationnumber: formData.declarationnumber,
-      declarationdispensedate: formData.declarationdispensedate,
-      fobamountusdt: Number(formData.fobamountusdt),
-      exchangerate: Number(formData.exchangerate),
-      externalfreight: Number(formData.externalfreight),
-      insuranceCost: Number(formData.insuranceCost),
-      inlandfreight1: Number(formData.inlandfreight1),
-      djibouticost: Number(formData.djibouticost),
-      othercost1: Number(formData.othercost1),
-      itemManagementdto: formData.itemManagementdto.map(item => ({
-        hscode: item.hscode,
-        itemdescription: item.itemdescription,
-        unitofmeasurement: item.unitofmeasurement,
-        quantity: Number(item.quantity),
-        unitCost: Number(item.unitCost),
-        // Note: We're not including item-level taxes here
-      })),
-      // Taxes sent separately
-      taxApplicationdto: formData.taxApplicationdto.map(tax => ({
-        name: tax.name,
-        value: Number(tax.value),
-        codename: tax.codename,
-      })),
-    };
-
-    console.log("Full Submission Data:", submissionData);
-
-    const response = await fetch(
-      `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${userId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(submissionData),
+      if (!token || !userId) {
+        throw new Error("Session expired. Please log in again.");
       }
-    );
 
-    const responseData = await response.text();
-    console.log("API Response:", responseData);
+      if (!roles.includes("CLERK")) {
+        throw new Error("You don't have permission to submit declarations.");
+      }
 
-    if (!response.ok) {
-      throw new Error(responseData || "Submission failed");
+      // Prepare submission data
+      const submissionData = {
+        custombranchname: formData.custombranchname,
+        declarationnumber: formData.declarationnumber,
+        declarationdispensedate: formData.declarationdispensedate,
+        fobamountusdt: Number(formData.fobamountusdt),
+        exchangerate: Number(formData.exchangerate),
+        externalfreight: Number(formData.externalfreight),
+        insuranceCost: Number(formData.insuranceCost),
+        inlandfreight1: Number(formData.inlandfreight1),
+        djibouticost: Number(formData.djibouticost),
+        othercost1: Number(formData.othercost1),
+        itemManagementdto: formData.itemManagementdto.map((item) => ({
+          hscode: item.hscode,
+          itemdescription: item.itemdescription,
+          unitofmeasurement: item.unitofmeasurement,
+          quantity: Number(item.quantity),
+          unitCost: Number(item.unitCost),
+          taxApplicationdto: item.taxApplicationdto,
+        })),
+        taxApplicationdto: formData.taxApplicationdto.map((tax) => ({
+          name: tax.name,
+          value: Number(tax.value),
+          codename: tax.codename,
+        })),
+      };
+
+      console.log("Full Submission Data:", submissionData);
+
+      const response = await fetch(
+        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${1234554321}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(submissionData),
+        }
+      );
+
+      const responseData = await response.text();
+      console.log("API Response:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData || "Submission failed");
+      }
+
+      alert("Declaration submitted successfully!");
+
+      // Reset form
+      setFormData({
+        custombranchname: "",
+        declarationnumber: "",
+        declarationdispensedate: "",
+        fobamountusdt: 0,
+        exchangerate: 0,
+        externalfreight: 0,
+        insuranceCost: 0,
+        inlandfreight1: 0,
+        djibouticost: 0,
+        othercost1: 0,
+        itemManagementdto: [],
+        taxApplicationdto: [{ name: "VAT", value: 15, codename: "VAT" }],
+      });
+    } catch (err: any) {
+      console.error("Submission Error:", err);
+      setError(err.message || "Failed to submit declaration");
+
+      if (err.message.includes("expired") || err.message.includes("permission")) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("roles");
+        router.push("/companies");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    alert("Declaration submitted successfully!");
-    
-    // Reset form
-    setFormData({
-      custombranchname: "",
-      declarationnumber: "",
-      declarationdispensedate: "",
-      fobamountusdt: 0,
-      exchangerate: 0,
-      externalfreight: 0,
-      insuranceCost: 0,
-      inlandfreight1: 0,
-      djibouticost: 0,
-      othercost1: 0,
-      itemManagementdto: [],
-      taxApplicationdto: [{ name: "VAT", value: 15, codename: "VAT15" }],
-    });
-
-  } catch (err: any) {
-    console.error("Submission Error:", err);
-    setError(err.message || "Failed to submit declaration");
-    
-    if (err.message.includes("expired") || err.message.includes("permission")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("roles");
-      router.push("/companies");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="w-full max-w-[100vw] px-2 md:px-4 overflow-hidden">

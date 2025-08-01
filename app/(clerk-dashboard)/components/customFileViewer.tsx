@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { FaChevronDown } from "react-icons/fa";
 
 interface DocumentFile {
   label: string;
@@ -161,13 +162,9 @@ function FilePreview({
         return;
       }
 
-      // Extract MIME type and base64 data from the data URL
       const parts = url.split(",");
-      const meta = parts[0]; // e.g., "data:image/jpeg;base64"
-
-      // Remove all whitespace from the base64 content, as `atob` does not tolerate it
+      const meta = parts[0];
       const base64Content = parts[1] ? parts[1].replace(/\s/g, "") : "";
-
       const mimeTypeMatch = meta.match(/^data:(.*?);/);
       const mimeType = mimeTypeMatch
         ? mimeTypeMatch[1]
@@ -182,36 +179,26 @@ function FilePreview({
         return;
       }
 
-      // Decode base64 string to a binary string
       const binaryString = atob(base64Content);
       const len = binaryString.length;
       const bytes = new Uint8Array(len);
 
-      // Convert binary string to a Uint8Array
       for (let i = 0; i < len; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Create a Blob from the binary data
       const blob = new Blob([bytes], { type: mimeType });
-
-      // Create a temporary URL for the Blob
       const blobUrl = URL.createObjectURL(blob);
-
-      // Create a temporary anchor element
       const a = document.createElement("a");
       a.href = blobUrl;
-      // Suggest a filename for the download
       a.download = `${label.replace(/[^a-zA-Z0-9]/g, "_")}.${
         mimeType.split("/")[1] || "file"
       }`;
 
-      // Append to body, click, and remove to trigger download
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
 
-      // Clean up the object URL to free up memory (with a slight delay)
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
     } catch (error) {
       console.error("Error during client-side download:", error);
@@ -227,11 +214,10 @@ function FilePreview({
     <div className="bg-gray-100 p-4 rounded shadow flex flex-col justify-between">
       <div>
         <h3 className="text-md font-semibold mb-2">{label}</h3>
-        {/* Added a clickable area for preview */}
         {isImage || isPdf ? (
           <div
             className="w-full h-48 rounded cursor-pointer overflow-hidden flex items-center justify-center bg-gray-200"
-            onClick={() => onPreviewClick(url, label)} // Call the parent's preview handler
+            onClick={() => onPreviewClick(url, label)}
           >
             {isImage && (
               <img
@@ -251,9 +237,9 @@ function FilePreview({
         )}
       </div>
       <div className="flex justify-between items-center mt-4 gap-2">
-        {(isImage || isPdf) && ( // Only show view button for supported preview types
+        {(isImage || isPdf) && (
           <button
-            onClick={() => onPreviewClick(url, label)} // Trigger modal preview
+            onClick={() => onPreviewClick(url, label)}
             className="flex-1 text-purple-600 hover:underline text-center bg-purple-50 py-2 rounded cursor-pointer"
           >
             View {label}
@@ -276,10 +262,12 @@ export default function CustomFileViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for the preview modal
   const [modalOpen, setModalOpen] = useState(false);
   const [modalFileUrl, setModalFileUrl] = useState("");
   const [modalFileLabel, setModalFileLabel] = useState("");
+
+  // New state to track expanded users
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   const openPreviewModal = (url: string, label: string) => {
     setModalFileUrl(url);
@@ -293,10 +281,23 @@ export default function CustomFileViewer() {
     setModalFileLabel("");
   };
 
+  // New function to toggle the expanded state
+  const toggleExpand = (userId: string) => {
+    setExpandedUsers((prevExpandedUsers) => {
+      const newSet = new Set(prevExpandedUsers);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
+
   useEffect(() => {
     const fetchFiles = async () => {
       setLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -313,14 +314,11 @@ export default function CustomFileViewer() {
           }
         );
         const rawData = response.data;
-        console.log("Fetched Raw Data:", rawData); // Log raw data for debugging
+        console.log("Fetched Raw Data:", rawData);
 
-        // Group documents by userId
         const grouped: Record<string, UserDocument> = {};
-
         rawData.forEach((item: any) => {
           const userId = item.userId;
-
           if (!grouped[userId]) {
             grouped[userId] = {
               userId,
@@ -331,40 +329,25 @@ export default function CustomFileViewer() {
               documents: [],
             };
           }
-
-          // Add all available documents dynamically with the helper function
           if (item.imagebaseCustomfile) {
             grouped[userId].documents.push({
               label: "Custom File",
-              base64Data: createDataUrl(
-                item.imagebaseCustomfile,
-                "Custom File"
-              ),
+              base64Data: createDataUrl(item.imagebaseCustomfile, "Custom File"),
             });
           }
-
           if (item.imagebaseBankPermitfile) {
             grouped[userId].documents.push({
               label: "Bank Permit File",
-              base64Data: createDataUrl(
-                item.imagebaseBankPermitfile,
-                "Bank Permit File"
-              ),
+              base64Data: createDataUrl(item.imagebaseBankPermitfile, "Bank Permit File"),
             });
           }
-
           if (item.imageCummercialInvoicefile) {
             grouped[userId].documents.push({
               label: "Commercial Invoice File",
-              base64Data: createDataUrl(
-                item.imageCummercialInvoicefile,
-                "Commercial Invoice File"
-              ),
+              base64Data: createDataUrl(item.imageCummercialInvoicefile, "Commercial Invoice File"),
             });
           }
-          // Add more types if needed
         });
-
         setUserDocuments(Object.values(grouped));
       } catch (err) {
         console.error("Error fetching files:", err);
@@ -381,7 +364,6 @@ export default function CustomFileViewer() {
         setLoading(false);
       }
     };
-
     fetchFiles();
   }, []);
 
@@ -411,48 +393,60 @@ export default function CustomFileViewer() {
           No documents available for any user.
         </p>
       ) : (
-        userDocuments.map((user, index) => (
+        userDocuments.map((user) => (
           <div
-            key={index}
-            className="bg-white rounded-lg shadow-lg p-6 mb-10 border border-gray-100"
+            key={user.userId}
+            className="bg-white rounded-lg shadow-lg p-6 mb-6 border border-gray-100"
           >
-            <h3 className="text-2xl font-bold mb-4 text-purple-700 border-b pb-2">
-              {" "}
-              {user.firstname} {user.lastname}
-            </h3>
-            <p className="text-gray-700 mb-4">
-              <strong>Company:</strong> {user.companyname}
-            </p>
-            <p className="text-gray-700 mb-1">
-              <strong>TIN Number:</strong> {user.tinNumebr}
-            </p>
-
-            <p className="text-gray-700 mb-1">
-              <strong>User ID:</strong>{" "}
-              <span className="font-mono text-sm">{user.userId}</span>
-            </p>
-
-            {user.documents.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
-                {user.documents.map((doc, docIndex) => (
-                  <FilePreview
-                    key={docIndex}
-                    label={doc.label}
-                    url={doc.base64Data}
-                    onPreviewClick={openPreviewModal} // Pass the modal opener to FilePreview
-                  />
-                ))}
+            {/* The main button to toggle the view */}
+            <button
+              onClick={() => toggleExpand(user.userId)}
+              className="w-full flex justify-between items-center text-left py-4 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+            >
+              <div>
+                <div className="flex items-center gap-4">
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {user.companyname}
+                  </h3>
+                  <span className="text-sm text-gray-500 font-medium">
+                    (TIN: {user.tinNumebr})
+                  </span>
+                </div>
+                <p className="text-gray-600 text-sm mt-1">
+                  User: {user.firstname} {user.lastname}
+                </p>
               </div>
-            ) : (
-              <p className="text-gray-600 italic mt-4 text-center py-4 border-t border-gray-200">
-                No specific files uploaded for this user.
-              </p>
+              <FaChevronDown
+                className={`text-gray-400 transition-transform duration-300 ${
+                  expandedUsers.has(user.userId) ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {/* The collapsible content section */}
+            {expandedUsers.has(user.userId) && (
+              <div className="pt-4 border-t mt-4">
+                {user.documents.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+                    {user.documents.map((doc, docIndex) => (
+                      <FilePreview
+                        key={docIndex}
+                        label={doc.label}
+                        url={doc.base64Data}
+                        onPreviewClick={openPreviewModal}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600 italic text-center py-4">
+                    No specific files uploaded for this user.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         ))
       )}
 
-      {/* The Preview Modal */}
       <PreviewModal
         isOpen={modalOpen}
         onClose={closePreviewModal}
