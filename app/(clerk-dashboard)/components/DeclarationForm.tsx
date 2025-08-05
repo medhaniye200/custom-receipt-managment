@@ -227,8 +227,8 @@ function ItemRow({
               className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
               required
               min="0"
-              step="0.01"
-              readOnly
+              step="0.00001"
+              // readOnly
             />
           </td>
           <td className="px-2 py-1 border border-gray-200">
@@ -285,9 +285,8 @@ export default function DeclarationForm() {
     djibouticost: 0,
     othercost1: 0,
     itemManagementdto: [],
-    taxApplicationdto: [
-      { name: "VAT", value: 15, codename: "VAT" },
-    ],
+    // Initial state for top-level taxes is an empty array
+    taxApplicationdto: [],
   });
 
   const [loading, setLoading] = useState(false);
@@ -341,7 +340,8 @@ export default function DeclarationForm() {
           unitofmeasurement: "",
           quantity: 1,
           unitCost: 0,
-          taxApplicationdto: [],
+          // Automatically add an initial tax to the new item
+          taxApplicationdto: [{ name: "", value: 0, codename: "" }],
         },
       ],
     });
@@ -426,7 +426,17 @@ export default function DeclarationForm() {
         throw new Error("You don't have permission to submit declarations.");
       }
 
-      // Prepare submission data
+      // Step 1: Consolidate all unique taxes from all items for the top-level array.
+      const allUniqueTaxes = new Map<string, TaxDto>();
+      formData.itemManagementdto.forEach((item) => {
+        item.taxApplicationdto.forEach((tax) => {
+          if (tax.codename && !allUniqueTaxes.has(tax.codename)) {
+            allUniqueTaxes.set(tax.codename, tax);
+          }
+        });
+      });
+
+      // Step 2: Construct the final submission data object.
       const submissionData = {
         custombranchname: formData.custombranchname,
         declarationnumber: formData.declarationnumber,
@@ -438,6 +448,8 @@ export default function DeclarationForm() {
         inlandfreight1: Number(formData.inlandfreight1),
         djibouticost: Number(formData.djibouticost),
         othercost1: Number(formData.othercost1),
+
+        // This array contains each item with its own list of taxes.
         itemManagementdto: formData.itemManagementdto.map((item) => ({
           hscode: item.hscode,
           itemdescription: item.itemdescription,
@@ -446,17 +458,15 @@ export default function DeclarationForm() {
           unitCost: Number(item.unitCost),
           taxApplicationdto: item.taxApplicationdto,
         })),
-        taxApplicationdto: formData.taxApplicationdto.map((tax) => ({
-          name: tax.name,
-          value: Number(tax.value),
-          codename: tax.codename,
-        })),
+
+        // This array contains all unique taxes from the entire declaration.
+        taxApplicationdto: Array.from(allUniqueTaxes.values()),
       };
 
       console.log("Full Submission Data:", submissionData);
 
       const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${1234554321}`,
+        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${formData.declarationnumber}`,
         {
           method: "POST",
           headers: {
@@ -489,13 +499,16 @@ export default function DeclarationForm() {
         djibouticost: 0,
         othercost1: 0,
         itemManagementdto: [],
-        taxApplicationdto: [{ name: "VAT", value: 15, codename: "VAT" }],
+        taxApplicationdto: [],
       });
     } catch (err: any) {
       console.error("Submission Error:", err);
       setError(err.message || "Failed to submit declaration");
 
-      if (err.message.includes("expired") || err.message.includes("permission")) {
+      if (
+        err.message.includes("expired") ||
+        err.message.includes("permission")
+      ) {
         localStorage.removeItem("token");
         localStorage.removeItem("userId");
         localStorage.removeItem("roles");
@@ -573,6 +586,7 @@ export default function DeclarationForm() {
           <InputField
             label="Inland Freight"
             name="inlandfreight1"
+            type="number"
             value={formData.inlandfreight1}
             onChange={handleChange}
           />
