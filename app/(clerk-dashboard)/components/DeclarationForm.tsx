@@ -23,7 +23,7 @@ type FormData = {
   custombranchname: string;
   declarationnumber: string;
   declarationdispensedate: string;
-  fobamountusdt: number;
+  fobamountusdt: number;    
   exchangerate: number;
   externalfreight: number;
   insuranceCost: number;
@@ -466,7 +466,7 @@ export default function DeclarationForm() {
       console.log("Full Submission Data:", submissionData);
 
       const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${formData.declarationnumber}`,
+        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${1234554321}`,
         {
           method: "POST",
           headers: {

@@ -405,7 +405,7 @@ export default function WarehouseFileViewer() {
             {expandedUsers.has(user.userId) && (
               <div className="pt-4 border-t mt-4">
                 {user.documents.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
                     {user.documents.map((doc, docIndex) => (
                       <FilePreview
                         key={docIndex}
