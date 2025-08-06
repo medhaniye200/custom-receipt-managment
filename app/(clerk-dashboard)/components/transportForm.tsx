@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, ChangeEvent } from "react";
 
-export default function WarehouseFeeForm() {
+export default function TransportFeeForm() {
   const [formData, setFormData] = useState({
     companyName: "",
     companyTIN: "",
@@ -37,7 +37,7 @@ export default function WarehouseFeeForm() {
 
     try {
       const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/user/warehousefee/${userId}`,
+        `https://customreceiptmanagement.onrender.com//api/v1/clerk/transportInfo/{userId}/${userId}`,
         {
           method: "POST",
           headers: {
@@ -56,7 +56,7 @@ export default function WarehouseFeeForm() {
 
       const data = await response.json();
       console.log("Success:", data);
-      alert("Warehouse fee submitted successfully!");
+      alert("Transport fee submitted successfully!");
 
       setFormData({
         companyName: "",
@@ -68,16 +68,16 @@ export default function WarehouseFeeForm() {
         receiptDate: "",
       });
     } catch (error) {
-      console.error("Error submitting warehouse fee:", error);
+      console.error("Error submitting transport fee:", error);
 
       if (error instanceof Error) {
-        alert(`Failed to submit warehouse fee. Error: ${error.message}`);
+        alert(`Failed to submit transport fee. Error: ${error.message}`);
       } else {
-        // Handle cases where the error is not a standard Error object (e.g., a string or number)
-        alert("Failed to submit warehouse fee. An unknown error occurred.");
+        alert("Failed to submit transport fee. An unknown error occurred.");
       }
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <form
@@ -85,7 +85,7 @@ export default function WarehouseFeeForm() {
         className="w-full max-w-xl bg-white p-6 rounded shadow"
       >
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-          Warehouse Fee Form
+          Transport Fee Form
         </h2>
 
         {/* Company Name */}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Download, X, Eye, ChevronDown, File } from "lucide-react";
+import { Download, X, Eye, ChevronDown, File, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // The data structure returned by the API
@@ -43,8 +43,7 @@ const createDataUrl = (
   if (!base64String) return "";
   if (base64String.startsWith("data:")) return base64String;
 
-  // Determine MIME type based on label as a fallback
-  let mimeType = "image/jpeg"; // A common default for images
+  let mimeType = "image/jpeg";
   if (label.toLowerCase().includes("receipt")) {
     mimeType = "image/jpeg";
   } else if (label.toLowerCase().includes("pdf")) {
@@ -53,69 +52,6 @@ const createDataUrl = (
 
   return `data:${mimeType};base64,${base64String}`;
 };
-
-// PreviewModal Component (reused from your example)
-interface PreviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  fileUrl: string;
-  fileLabel: string;
-}
-
-function PreviewModal({
-  isOpen,
-  onClose,
-  fileUrl,
-  fileLabel,
-}: PreviewModalProps) {
-  if (!isOpen) return null;
-
-  const isImage = fileUrl.startsWith("data:image");
-  const isPdf = fileUrl.startsWith("data:application/pdf");
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">{fileLabel} Preview</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-          >
-            <X />
-          </button>
-        </div>
-        <div className="flex-grow p-4 overflow-auto">
-          {isImage ? (
-            <img
-              src={fileUrl}
-              alt={fileLabel}
-              className="max-w-full max-h-full mx-auto object-contain"
-            />
-          ) : isPdf ? (
-            <iframe
-              src={fileUrl}
-              className="w-full h-full border-none"
-              title={`${fileLabel} Preview`}
-            />
-          ) : (
-            <p className="text-red-600 text-center py-10">
-              Unsupported file format for detailed preview: {fileLabel}.
-            </p>
-          )}
-        </div>
-        <div className="p-4 border-t flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // FilePreview component with download and view buttons
 function FilePreview({
@@ -138,7 +74,7 @@ function FilePreview({
           className="mt-4 flex items-center justify-center gap-2 text-gray-400 bg-gray-200 py-2 rounded cursor-not-allowed"
           disabled
         >
-          <Download size={16} /> Download
+          <Download size={16} />
         </button>
       </div>
     );
@@ -160,7 +96,8 @@ function FilePreview({
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
       console.error("Error during client-side download:", error);
-      alert("Failed to download file.");
+      // Changed alert to console.error as per instructions
+      console.error("Failed to download file.");
     }
   };
 
@@ -193,14 +130,14 @@ function FilePreview({
         {(isImage || isPdf) && (
           <button
             onClick={() => onPreviewClick(url, label)}
-            className="flex-1 flex items-center justify-center gap-2 text-purple-600 hover:underline bg-purple-50 py-2 rounded cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 text-sm text-purple-600 hover:underline bg-purple-50 py-2 rounded cursor-pointer"
           >
             <Eye size={16} /> View
           </button>
         )}
         <button
           onClick={handleDownload}
-          className="flex-1 flex items-center justify-center gap-2 text-blue-600 hover:underline bg-blue-50 py-2 rounded cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 text-sm text-blue-600 hover:underline bg-blue-50 py-2 rounded cursor-pointer"
         >
           <Download size={16} /> Download
         </button>
@@ -216,27 +153,25 @@ export default function TransportFileViewer() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // State for the preview modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalFileUrl, setModalFileUrl] = useState("");
-  const [modalFileLabel, setModalFileLabel] = useState("");
+  // State for the in-column preview
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    label: string;
+  } | null>(null);
+
+  // Function to handle opening the preview
+  const handleOpenPreview = (url: string, label: string) => {
+    setPreviewFile({ url, label });
+  };
+
+  // Function to handle closing the preview
+  const handleClosePreview = () => {
+    setPreviewFile(null);
+  };
 
   // State to track which user sections are expanded
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
-  const openPreviewModal = (url: string, label: string) => {
-    setModalFileUrl(url);
-    setModalFileLabel(label);
-    setModalOpen(true);
-  };
-
-  const closePreviewModal = () => {
-    setModalOpen(false);
-    setModalFileUrl("");
-    setModalFileLabel("");
-  };
-
-  // Function to toggle the expanded state for a user
   const toggleExpand = (userId: string) => {
     setExpandedUsers((prevExpandedUsers) => {
       const newSet = new Set(prevExpandedUsers);
@@ -257,8 +192,6 @@ export default function TransportFileViewer() {
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Authentication token not found. Redirecting to login...");
-          // Optionally, redirect the user
-          // router.push("/login");
           setLoading(false);
           return;
         }
@@ -288,7 +221,6 @@ export default function TransportFileViewer() {
             };
           }
 
-          // Dynamically add documents based on the API response structure
           if (item.imageBaseMainReceipt) {
             grouped[userId].documents.push({
               label: `${item.maintype} Receipt`,
@@ -337,7 +269,7 @@ export default function TransportFileViewer() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-blue-600">
+      <div className="flex items-center justify-center h-full text-xl text-blue-600">
         <svg
           className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500"
           xmlns="http://www.w3.org/2000/svg"
@@ -368,6 +300,45 @@ export default function TransportFileViewer() {
       <div className="text-center p-6 text-red-600 border border-red-300 bg-red-50 rounded-md mx-auto max-w-md mt-10">
         <p className="font-bold">Error:</p>
         <p>{error}</p>
+      </div>
+    );
+  }
+
+  // Conditional rendering for the file preview or the list
+  if (previewFile) {
+    const isImage = previewFile.url.startsWith("data:image");
+    const isPdf = previewFile.url.startsWith("data:application/pdf");
+
+    return (
+      <div className="p-4 bg-white rounded-lg shadow-lg h-full flex flex-col">
+        <div className="flex items-center gap-4 border-b pb-4 mb-4">
+          <button
+            onClick={handleClosePreview}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-semibold">{previewFile.label} Preview</h2>
+        </div>
+        <div className="flex-grow overflow-auto">
+          {isImage ? (
+            <img
+              src={previewFile.url}
+              alt={previewFile.label}
+              className="max-w-full max-h-full mx-auto object-contain"
+            />
+          ) : isPdf ? (
+            <iframe
+              src={previewFile.url}
+              className="w-full h-full border-none"
+              title={`${previewFile.label} Preview`}
+            />
+          ) : (
+            <p className="text-red-600 text-center py-10">
+              Unsupported file format for detailed preview: {previewFile.label}.
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -415,13 +386,13 @@ export default function TransportFileViewer() {
             {expandedUsers.has(user.userId) && (
               <div className="pt-4 border-t mt-4">
                 {user.documents.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
                     {user.documents.map((doc, docIndex) => (
                       <FilePreview
                         key={docIndex}
                         label={doc.label}
                         url={doc.base64Data}
-                        onPreviewClick={openPreviewModal}
+                        onPreviewClick={handleOpenPreview}
                       />
                     ))}
                   </div>
@@ -435,13 +406,6 @@ export default function TransportFileViewer() {
           </div>
         ))
       )}
-
-      <PreviewModal
-        isOpen={modalOpen}
-        onClose={closePreviewModal}
-        fileUrl={modalFileUrl}
-        fileLabel={modalFileLabel}
-      />
     </div>
   );
 }

@@ -1,19 +1,19 @@
 "use client";
 
-import ReceiptForm from "./ReceiptForm";
-import WarehouseFileViewer from "../components/WarehouseFileViewer";
+import TransportFeeForm from "../components/transportForm";
+import WarehouseFeeForm from "../components/transportFileViewer";
 
-export default function MainLayout() {
+export default function Home() {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
-      {/* First Column: Receipt Upload Form */}
+      {/* Left Column: Transport Fee Form */}
       <div className="w-full lg:w-1/3 p-4 border-r border-gray-200 lg:h-screen lg:overflow-y-auto">
-        <ReceiptForm />
+        <TransportFeeForm />
       </div>
 
-      {/* Second Column: Warehouse File Viewer */}
+      {/* Right Column: Warehouse Fee Form */}
       <div className="w-full lg:w-2/3 p-4 lg:h-screen lg:overflow-y-auto">
-        <WarehouseFileViewer />
+        <WarehouseFeeForm />
       </div>
     </div>
   );
