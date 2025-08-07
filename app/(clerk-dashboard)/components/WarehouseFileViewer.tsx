@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { AtSign, File, Download, X, Eye, ChevronDown } from "lucide-react";
+import { Download, X, Eye, ChevronDown, File, ArrowLeft } from "lucide-react";
 
-// The data structure returned by the API
+// ---------------- Interfaces ----------------
 interface RawWarehouseFile {
   userId: string;
   tinNumber: string;
@@ -17,7 +17,6 @@ interface RawWarehouseFile {
   imageBaseWithholidingReceipt: string;
 }
 
-// A helper interface to group documents for display
 interface UserDocument {
   userId: string;
   firstName: string;
@@ -29,12 +28,12 @@ interface UserDocument {
 
 interface DocumentFile {
   label: string;
-  base64Data: string; // The data URI
+  base64Data: string;
 }
 
 const BASE_URL = "https://customreceiptmanagement.onrender.com";
 
-// Helper function to create a data URI with a default MIME type if needed
+// ---------------- Helper ----------------
 const createDataUrl = (
   base64String: string | null | undefined,
   label: string
@@ -42,81 +41,15 @@ const createDataUrl = (
   if (!base64String) return "";
   if (base64String.startsWith("data:")) return base64String;
 
-  // Determine MIME type based on label as a fallback
-  let mimeType = "image/jpeg"; // A common default
-  if (label.toLowerCase().includes("receipt")) {
-    mimeType = "image/jpeg";
-  } else if (label.toLowerCase().includes("pdf")) {
+  let mimeType = "image/jpeg";
+  if (label.toLowerCase().includes("pdf")) {
     mimeType = "application/pdf";
   }
 
   return `data:${mimeType};base64,${base64String}`;
 };
 
-// PreviewModal Component (reused from your example)
-interface PreviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  fileUrl: string;
-  fileLabel: string;
-}
-
-function PreviewModal({
-  isOpen,
-  onClose,
-  fileUrl,
-  fileLabel,
-}: PreviewModalProps) {
-  if (!isOpen) return null;
-
-  const isImage = fileUrl.startsWith("data:image");
-  const isPdf = fileUrl.startsWith("data:application/pdf");
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">{fileLabel} Preview</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-          >
-            <X />
-          </button>
-        </div>
-        <div className="flex-grow p-4 overflow-auto">
-          {isImage ? (
-            <img
-              src={fileUrl}
-              alt={fileLabel}
-              className="max-w-full max-h-full mx-auto object-contain"
-            />
-          ) : isPdf ? (
-            <iframe
-              src={fileUrl}
-              className="w-full h-full border-none"
-              title={`${fileLabel} Preview`}
-            />
-          ) : (
-            <p className="text-red-600 text-center py-10">
-              Unsupported file format for detailed preview: {fileLabel}.
-            </p>
-          )}
-        </div>
-        <div className="p-4 border-t flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// FilePreview component with download and view buttons
+// ---------------- FilePreview ----------------
 function FilePreview({
   label,
   url,
@@ -126,23 +59,6 @@ function FilePreview({
   url: string;
   onPreviewClick: (url: string, label: string) => void;
 }) {
-  if (!url) {
-    return (
-      <div className="bg-gray-100 p-4 rounded shadow flex flex-col justify-between">
-        <div>
-          <h3 className="text-md font-semibold mb-2">{label}</h3>
-          <p className="text-gray-500">No file available for this document.</p>
-        </div>
-        <button
-          className="mt-4 flex items-center justify-center gap-2 text-gray-400 bg-gray-200 py-2 rounded cursor-not-allowed"
-          disabled
-        >
-          <Download size={16} /> Download
-        </button>
-      </div>
-    );
-  }
-
   const isImage = url.startsWith("data:image");
   const isPdf = url.startsWith("data:application/pdf");
 
@@ -158,8 +74,7 @@ function FilePreview({
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
-      console.error("Error during client-side download:", error);
-      alert("Failed to download file.");
+      console.error("Download failed:", error);
     }
   };
 
@@ -169,7 +84,7 @@ function FilePreview({
         <h3 className="text-md font-semibold mb-2">{label}</h3>
         <div
           className="w-full h-48 rounded cursor-pointer overflow-hidden flex items-center justify-center bg-gray-200"
-          onClick={() => (isImage || isPdf) && onPreviewClick(url, label)}
+          onClick={() => onPreviewClick(url, label)}
         >
           {isImage && (
             <img
@@ -183,23 +98,20 @@ function FilePreview({
               <File size={20} /> Click to view PDF
             </p>
           )}
-          {!isImage && !isPdf && (
-            <p className="text-red-500 text-center">No preview available</p>
-          )}
         </div>
       </div>
       <div className="flex justify-between items-center mt-4 gap-2">
         {(isImage || isPdf) && (
           <button
             onClick={() => onPreviewClick(url, label)}
-            className="flex-1 flex items-center justify-center gap-2 text-purple-600 hover:underline bg-purple-50 py-2 rounded cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 text-sm text-purple-600 hover:underline bg-purple-50 py-2 rounded cursor-pointer"
           >
             <Eye size={16} /> View
           </button>
         )}
         <button
           onClick={handleDownload}
-          className="flex-1 flex items-center justify-center gap-2 text-blue-600 hover:underline bg-blue-50 py-2 rounded cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 text-sm text-blue-600 hover:underline bg-blue-50 py-2 rounded cursor-pointer"
         >
           <Download size={16} /> Download
         </button>
@@ -208,41 +120,31 @@ function FilePreview({
   );
 }
 
-// Main component to fetch and display warehouse files
+// ---------------- Main Component ----------------
 export default function WarehouseFileViewer() {
   const [userDocuments, setUserDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for the preview modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalFileUrl, setModalFileUrl] = useState("");
-  const [modalFileLabel, setModalFileLabel] = useState("");
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    label: string;
+  } | null>(null);
 
-  // New state to track expanded users
+  const handleOpenPreview = (url: string, label: string) => {
+    setPreviewFile({ url, label });
+  };
+
+  const handleClosePreview = () => {
+    setPreviewFile(null);
+  };
+
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
-  const openPreviewModal = (url: string, label: string) => {
-    setModalFileUrl(url);
-    setModalFileLabel(label);
-    setModalOpen(true);
-  };
-
-  const closePreviewModal = () => {
-    setModalOpen(false);
-    setModalFileUrl("");
-    setModalFileLabel("");
-  };
-
-  // New function to toggle the expanded state
   const toggleExpand = (userId: string) => {
-    setExpandedUsers((prevExpandedUsers) => {
-      const newSet = new Set(prevExpandedUsers);
-      if (newSet.has(userId)) {
-        newSet.delete(userId);
-      } else {
-        newSet.add(userId);
-      }
+    setExpandedUsers((prev) => {
+      const newSet = new Set(prev);
+      newSet.has(userId) ? newSet.delete(userId) : newSet.add(userId);
       return newSet;
     });
   };
@@ -254,26 +156,19 @@ export default function WarehouseFileViewer() {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setError("Authentication token not found. Please log in.");
-          setLoading(false);
+          setError("Authentication token not found.");
           return;
         }
 
-        const response = await axios.get<RawWarehouseFile[]>(
+        const res = await axios.get<RawWarehouseFile[]>(
           `${BASE_URL}/api/v1/clerk/wareHousefileAll`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        const rawData = response.data;
-        console.log("Fetched Raw Data:", rawData);
 
         const grouped: Record<string, UserDocument> = {};
 
-        rawData.forEach((item) => {
+        res.data.forEach((item) => {
           const userId = item.userId;
-
           if (!grouped[userId]) {
             grouped[userId] = {
               userId,
@@ -307,29 +202,31 @@ export default function WarehouseFileViewer() {
         });
 
         setUserDocuments(Object.values(grouped));
-      } catch (err) {
-        console.error("Error fetching files:", err);
+      } catch (err: any) {
+        console.error("Error fetching warehouse files:", err);
         if (axios.isAxiosError(err) && err.response) {
           setError(
-            `Failed to fetch documents: ${err.response.status} - ${
+            `Failed to fetch: ${err.response.status} - ${
               err.response.data.message || err.response.statusText
             }`
           );
         } else {
-          setError("An unexpected error occurred while fetching documents.");
+          setError("An unexpected error occurred.");
         }
       } finally {
         setLoading(false);
       }
     };
+
     fetchFiles();
   }, []);
 
+  // -------------- Loading/Error State --------------
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-blue-600">
+      <div className="flex items-center justify-center h-full text-xl text-blue-600">
         <svg
-          className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500"
+          className="animate-spin h-5 w-5 mr-3 text-blue-500"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -345,7 +242,7 @@ export default function WarehouseFileViewer() {
           <path
             className="opacity-75"
             fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
           ></path>
         </svg>
         Loading documents...
@@ -362,6 +259,46 @@ export default function WarehouseFileViewer() {
     );
   }
 
+  // -------------- Preview View --------------
+  if (previewFile) {
+    const isImage = previewFile.url.startsWith("data:image");
+    const isPdf = previewFile.url.startsWith("data:application/pdf");
+
+    return (
+      <div className="p-4 bg-white rounded-lg shadow-lg h-full flex flex-col">
+        <div className="flex items-center gap-4 border-b pb-4 mb-4">
+          <button
+            onClick={handleClosePreview}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-semibold">{previewFile.label} Preview</h2>
+        </div>
+        <div className="flex-grow overflow-auto">
+          {isImage ? (
+            <img
+              src={previewFile.url}
+              alt={previewFile.label}
+              className="max-w-full max-h-full mx-auto object-contain"
+            />
+          ) : isPdf ? (
+            <iframe
+              src={previewFile.url}
+              className="w-full h-full border-none"
+              title={`${previewFile.label} Preview`}
+            />
+          ) : (
+            <p className="text-red-600 text-center py-10">
+              Unsupported format: {previewFile.label}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // -------------- Main Render --------------
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
@@ -377,22 +314,16 @@ export default function WarehouseFileViewer() {
             key={user.userId}
             className="bg-white rounded-lg shadow-lg p-6 mb-6 border border-gray-100"
           >
-            {/* The main button to toggle the view */}
             <button
               onClick={() => toggleExpand(user.userId)}
               className="w-full flex justify-between items-center text-left py-4 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
             >
               <div>
-                <div className="flex items-center gap-4">
-                  <h3 className="text-xl font-bold text-gray-800">
-                    {user.companyName}
-                  </h3>
-                  <span className="text-sm text-gray-500 font-medium">
-                    (TIN: {user.tinNumber})
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm mt-1">
-                  User: {user.firstName} {user.lastname}
+                <h3 className="text-xl font-bold text-gray-800">
+                  {user.companyName}
+                </h3>
+                <p className="text-sm text-gray-500 font-medium">
+                  (TIN: {user.tinNumber}) — {user.firstName} {user.lastname}
                 </p>
               </div>
               <ChevronDown
@@ -401,7 +332,6 @@ export default function WarehouseFileViewer() {
                 }`}
               />
             </button>
-            {/* The collapsible content section */}
             {expandedUsers.has(user.userId) && (
               <div className="pt-4 border-t mt-4">
                 {user.documents.length > 0 ? (
@@ -411,7 +341,7 @@ export default function WarehouseFileViewer() {
                         key={docIndex}
                         label={doc.label}
                         url={doc.base64Data}
-                        onPreviewClick={openPreviewModal}
+                        onPreviewClick={handleOpenPreview}
                       />
                     ))}
                   </div>
@@ -425,13 +355,6 @@ export default function WarehouseFileViewer() {
           </div>
         ))
       )}
-
-      <PreviewModal
-        isOpen={modalOpen}
-        onClose={closePreviewModal}
-        fileUrl={modalFileUrl}
-        fileLabel={modalFileLabel}
-      />
     </div>
   );
 }

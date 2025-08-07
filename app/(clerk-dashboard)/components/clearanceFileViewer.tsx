@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { AtSign, File, Download, X, Eye, ChevronDown } from "lucide-react";
+import { Eye, Download, ChevronDown, ArrowLeft, File } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-// The data structure returned by the API
 interface RawClearanceFile {
   userId: string;
   tinNumber: string;
@@ -17,7 +17,6 @@ interface RawClearanceFile {
   imageBaseWithholidingReceipt: string;
 }
 
-// A helper interface to group documents for display
 interface UserDocument {
   userId: string;
   firstName: string;
@@ -29,94 +28,26 @@ interface UserDocument {
 
 interface DocumentFile {
   label: string;
-  base64Data: string; // The data URI
+  base64Data: string;
 }
 
 const BASE_URL = "https://customreceiptmanagement.onrender.com";
 
-// Helper function to create a data URI with a default MIME type if needed
-const createDataUrl = (
+function createDataUrl(
   base64String: string | null | undefined,
   label: string
-): string => {
+): string {
   if (!base64String) return "";
   if (base64String.startsWith("data:")) return base64String;
 
-  // Determine MIME type based on label as a fallback
-  let mimeType = "image/jpeg"; // A common default for images
-  if (label.toLowerCase().includes("receipt")) {
-    mimeType = "image/jpeg";
-  } else if (label.toLowerCase().includes("pdf")) {
+  let mimeType = "image/jpeg";
+  if (label.toLowerCase().includes("pdf")) {
     mimeType = "application/pdf";
   }
 
   return `data:${mimeType};base64,${base64String}`;
-};
-
-// PreviewModal Component (reused from your example)
-interface PreviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  fileUrl: string;
-  fileLabel: string;
 }
 
-function PreviewModal({
-  isOpen,
-  onClose,
-  fileUrl,
-  fileLabel,
-}: PreviewModalProps) {
-  if (!isOpen) return null;
-
-  const isImage = fileUrl.startsWith("data:image");
-  const isPdf = fileUrl.startsWith("data:application/pdf");
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">{fileLabel} Preview</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-          >
-            <X />
-          </button>
-        </div>
-        <div className="flex-grow p-4 overflow-auto">
-          {isImage ? (
-            <img
-              src={fileUrl}
-              alt={fileLabel}
-              className="max-w-full max-h-full mx-auto object-contain"
-            />
-          ) : isPdf ? (
-            <iframe
-              src={fileUrl}
-              className="w-full h-full border-none"
-              title={`${fileLabel} Preview`}
-            />
-          ) : (
-            <p className="text-red-600 text-center py-10">
-              Unsupported file format for detailed preview: {fileLabel}.
-            </p>
-          )}
-        </div>
-        <div className="p-4 border-t flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// FilePreview component with download and view buttons
 function FilePreview({
   label,
   url,
@@ -126,118 +57,83 @@ function FilePreview({
   url: string;
   onPreviewClick: (url: string, label: string) => void;
 }) {
-  if (!url) {
-    return (
-      <div className="bg-gray-100 p-4 rounded shadow flex flex-col justify-between">
-        <div>
-          <h3 className="text-md font-semibold mb-2">{label}</h3>
-          <p className="text-gray-500">No file available for this document.</p>
-        </div>
-        <button
-          className="mt-4 flex items-center justify-center gap-2 text-gray-400 bg-gray-200 py-2 rounded cursor-not-allowed"
-          disabled
-        >
-          <Download size={16} /> Download
-        </button>
-      </div>
-    );
-  }
-
   const isImage = url.startsWith("data:image");
   const isPdf = url.startsWith("data:application/pdf");
 
   const handleDownload = () => {
-    try {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${label.replace(/[^a-zA-Z0-9]/g, "_")}.${
-        isPdf ? "pdf" : "jpg"
-      }`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 100);
-    } catch (error) {
-      console.error("Error during client-side download:", error);
-      alert("Failed to download file.");
-    }
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${label.replace(/[^a-zA-Z0-9]/g, "_")}.${
+      isPdf ? "pdf" : "jpg"
+    }`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
-    <div className="bg-gray-100 p-4 rounded shadow flex flex-col justify-between">
-      <div>
-        <h3 className="text-md font-semibold mb-2">{label}</h3>
-        <div
-          className="w-full h-48 rounded cursor-pointer overflow-hidden flex items-center justify-center bg-gray-200"
-          onClick={() => (isImage || isPdf) && onPreviewClick(url, label)}
-        >
-          {isImage && (
-            <img
-              src={url}
-              alt={label}
-              className="w-full h-full object-contain"
-            />
-          )}
-          {isPdf && (
-            <p className="text-blue-600 text-center p-4 flex items-center gap-2">
-              <File size={20} /> Click to view PDF
-            </p>
-          )}
-          {!isImage && !isPdf && (
-            <p className="text-red-500 text-center">No preview available</p>
-          )}
-        </div>
+    <div className="bg-gray-100 p-4 rounded shadow flex flex-col">
+      <h3 className="text-md font-semibold mb-2">{label}</h3>
+      <div
+        className="w-full h-48 rounded cursor-pointer overflow-hidden flex items-center justify-center bg-gray-200"
+        onClick={() => (isImage || isPdf) && onPreviewClick(url, label)}
+      >
+        {isImage && (
+          <img src={url} alt={label} className="w-full h-full object-contain" />
+        )}
+        {isPdf && (
+          <p className="text-blue-600 flex items-center gap-2">
+            <File size={20} /> Click to view PDF
+          </p>
+        )}
+        {!isImage && !isPdf && (
+          <p className="text-red-500 text-center">No preview available</p>
+        )}
       </div>
-      <div className="flex justify-between items-center mt-4 gap-2">
+      <div className="flex justify-between mt-4 gap-2">
         {(isImage || isPdf) && (
           <button
             onClick={() => onPreviewClick(url, label)}
-            className="flex-1 flex items-center justify-center gap-2 text-purple-600 hover:underline bg-purple-50 py-2 rounded cursor-pointer"
+            className="flex-1 text-sm bg-purple-100 text-purple-600 px-4 py-2 rounded flex items-center justify-center gap-1"
           >
-            <Eye size={16} /> View
+            <Eye size={16} />
+            View
           </button>
         )}
         <button
           onClick={handleDownload}
-          className="flex-1 flex items-center justify-center gap-2 text-blue-600 hover:underline bg-blue-50 py-2 rounded cursor-pointer"
+          className="flex-1 text-sm bg-blue-100 text-blue-600 px-4 py-2 rounded flex items-center justify-center gap-1"
         >
-          <Download size={16} /> Download
+          <Download size={16} />
+          Download
         </button>
       </div>
     </div>
   );
 }
 
-// Main component to fetch and display clearance files
 export default function ClearanceFileViewer() {
   const [userDocuments, setUserDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // State for the preview modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalFileUrl, setModalFileUrl] = useState("");
-  const [modalFileLabel, setModalFileLabel] = useState("");
-
-  // New state to track expanded users
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    label: string;
+  } | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const router = useRouter();
 
-  const openPreviewModal = (url: string, label: string) => {
-    setModalFileUrl(url);
-    setModalFileLabel(label);
-    setModalOpen(true);
+  const handleOpenPreview = (url: string, label: string) => {
+    setPreviewFile({ url, label });
   };
 
-  const closePreviewModal = () => {
-    setModalOpen(false);
-    setModalFileUrl("");
-    setModalFileLabel("");
+  const handleClosePreview = () => {
+    setPreviewFile(null);
   };
 
-  // New function to toggle the expanded state
   const toggleExpand = (userId: string) => {
-    setExpandedUsers((prevExpandedUsers) => {
-      const newSet = new Set(prevExpandedUsers);
+    setExpandedUsers((prev) => {
+      const newSet = new Set(prev);
       if (newSet.has(userId)) {
         newSet.delete(userId);
       } else {
@@ -248,29 +144,25 @@ export default function ClearanceFileViewer() {
   };
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      setLoading(true);
-      setError(null);
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setError("Authentication token not found. Please log in.");
+          setError("No token found");
           setLoading(false);
           return;
         }
 
-        const response = await axios.get<RawClearanceFile[]>(
+        const res = await axios.get<RawClearanceFile[]>(
           `${BASE_URL}/api/v1/clerk/ClearanceFileAll`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        const rawData = response.data;
-        
         const grouped: Record<string, UserDocument> = {};
 
-        rawData.forEach((item) => {
+        res.data.forEach((item) => {
           const userId = item.userId;
 
           if (!grouped[userId]) {
@@ -284,14 +176,10 @@ export default function ClearanceFileViewer() {
             };
           }
 
-          // Dynamically add documents based on the API response structure
           if (item.imageBaseMainReceipt) {
             grouped[userId].documents.push({
               label: `${item.maintype} Receipt`,
-              base64Data: createDataUrl(
-                item.imageBaseMainReceipt,
-                `${item.maintype} Receipt`
-              ),
+              base64Data: createDataUrl(item.imageBaseMainReceipt, "receipt"),
             });
           }
 
@@ -300,7 +188,7 @@ export default function ClearanceFileViewer() {
               label: `${item.withHoldihType} Withholding Receipt`,
               base64Data: createDataUrl(
                 item.imageBaseWithholidingReceipt,
-                `${item.withHoldihType} Withholding Receipt`
+                "receipt"
               ),
             });
           }
@@ -308,57 +196,62 @@ export default function ClearanceFileViewer() {
 
         setUserDocuments(Object.values(grouped));
       } catch (err) {
-        console.error("Error fetching files:", err);
-        if (axios.isAxiosError(err) && err.response) {
-          setError(
-            `Failed to fetch documents: ${err.response.status} - ${
-              err.response.data.message || err.response.statusText
-            }`
-          );
-        } else {
-          setError("An unexpected error occurred while fetching documents.");
-        }
+        setError("Failed to fetch clearance files");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFiles();
-  }, []);
+    fetchData();
+  }, [router]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-blue-600">
-        <svg
-          className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-        Loading documents...
+      <div className="p-6 text-center text-blue-600">
+        Loading clearance files...
       </div>
     );
   }
 
   if (error) {
+    return <div className="p-6 text-center text-red-600">{error}</div>;
+  }
+
+  if (previewFile) {
+    const isImage = previewFile.url.startsWith("data:image");
+    const isPdf = previewFile.url.startsWith("data:application/pdf");
+
     return (
-      <div className="text-center p-6 text-red-600 border border-red-300 bg-red-50 rounded-md mx-auto max-w-md mt-10">
-        <p className="font-bold">Error:</p>
-        <p>{error}</p>
+      <div className="p-4 bg-white rounded shadow-lg h-full flex flex-col">
+        <div className="flex items-center gap-4 border-b pb-4 mb-4">
+          <button
+            onClick={handleClosePreview}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-semibold">{previewFile.label}</h2>
+        </div>
+        <div className="flex-grow overflow-auto">
+          {isImage ? (
+            <img
+              src={previewFile.url}
+              alt={previewFile.label}
+              className="max-w-full max-h-full mx-auto object-contain"
+            />
+          ) : isPdf ? (
+            <iframe
+              src={previewFile.url}
+              className="w-full h-full border-none"
+              title={`${previewFile.label} PDF`}
+            />
+          ) : (
+            <p className="text-red-600 text-center py-10">
+              Unsupported preview
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -366,73 +259,49 @@ export default function ClearanceFileViewer() {
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-        Clearance File Viewer
+        Clearance Files
       </h2>
       {userDocuments.length === 0 ? (
-        <p className="text-center text-gray-600 text-lg py-10">
-          No clearance documents available.
-        </p>
+        <p className="text-center text-gray-600">No documents available.</p>
       ) : (
         userDocuments.map((user) => (
           <div
             key={user.userId}
-            className="bg-white rounded-lg shadow-lg p-6 mb-6 border border-gray-100"
+            className="bg-white rounded shadow p-6 mb-6 border border-gray-100"
           >
-            {/* The main button to toggle the view */}
             <button
               onClick={() => toggleExpand(user.userId)}
-              className="w-full flex justify-between items-center text-left py-4 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              className="w-full flex justify-between items-center text-left py-4 px-4 hover:bg-gray-50 rounded transition"
             >
               <div>
-                <div className="flex items-center gap-4">
-                  <h3 className="text-xl font-bold text-gray-800">
-                    {user.companyName}
-                  </h3>
-                  <span className="text-sm text-gray-500 font-medium">
-                    (TIN: {user.tinNumber})
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm mt-1">
+                <h3 className="text-lg font-bold text-gray-800">
+                  {user.companyName} ({user.tinNumber})
+                </h3>
+                <p className="text-gray-600 text-sm">
                   User: {user.firstName} {user.lastname}
                 </p>
               </div>
               <ChevronDown
-                className={`text-gray-400 transition-transform duration-300 ${
+                className={`transition-transform ${
                   expandedUsers.has(user.userId) ? "rotate-180" : ""
                 }`}
               />
             </button>
-            {/* The collapsible content section */}
             {expandedUsers.has(user.userId) && (
-              <div className="pt-4 border-t mt-4">
-                {user.documents.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                    {user.documents.map((doc, docIndex) => (
-                      <FilePreview
-                        key={docIndex}
-                        label={doc.label}
-                        url={doc.base64Data}
-                        onPreviewClick={openPreviewModal}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 italic text-center py-4">
-                    No specific files uploaded for this user.
-                  </p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                {user.documents.map((doc, i) => (
+                  <FilePreview
+                    key={i}
+                    label={doc.label}
+                    url={doc.base64Data}
+                    onPreviewClick={handleOpenPreview}
+                  />
+                ))}
               </div>
             )}
           </div>
         ))
       )}
-
-      <PreviewModal
-        isOpen={modalOpen}
-        onClose={closePreviewModal}
-        fileUrl={modalFileUrl}
-        fileLabel={modalFileLabel}
-      />
     </div>
   );
 }

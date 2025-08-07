@@ -23,7 +23,7 @@ type FormData = {
   custombranchname: string;
   declarationnumber: string;
   declarationdispensedate: string;
-  fobamountusdt: number;    
+  fobamountusdt: number;
   exchangerate: number;
   externalfreight: number;
   insuranceCost: number;

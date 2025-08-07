@@ -28,7 +28,8 @@ export default function CustomClearanceForm() {
   });
 
   // State for frontend UI control (withholding tax applicability)
-  const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] = useState<boolean>(false);
+  const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] =
+    useState<boolean>(false);
 
   const [message, setMessage] = useState<string | null>(null); // For user feedback
   // NEW STATE: To control form visibility after successful submission
@@ -53,9 +54,8 @@ export default function CustomClearanceForm() {
         }));
       }
     } else {
-      // For number inputs, parse the value to a float. If the value is an empty string, set it to 0.
-      // For other types, use the string value directly.
-      const processedValue = type === "number" ? (value === "" ? 0 : parseFloat(value)) : value;
+      const processedValue =
+        type === "number" ? (value === "" ? 0 : parseFloat(value)) : value;
       setFormData((prev) => ({ ...prev, [name]: processedValue }));
     }
   };
@@ -70,8 +70,12 @@ export default function CustomClearanceForm() {
 
     // Check if both userId and token exist
     if (!userId || !token) {
-      console.error("User ID or token not found in local storage. Cannot submit form.");
-      setMessage("Authentication error: User ID or token is missing. Please log in again. ❌");
+      console.error(
+        "User ID or token not found in local storage. Cannot submit form."
+      );
+      setMessage(
+        "Authentication error: User ID or token is missing. Please log in again. ❌"
+      );
       return;
     }
 
@@ -87,10 +91,10 @@ export default function CustomClearanceForm() {
         headers: {
           "Content-Type": "application/json",
           // Add the Authorization header with the token
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         // Stringify the payload object before sending
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -114,7 +118,9 @@ export default function CustomClearanceForm() {
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log("Success (JSON):", data);
-        setMessage(data.message || "Receipt details submitted successfully! ✅");
+        setMessage(
+          data.message || "Receipt details submitted successfully! ✅"
+        );
       } else {
         // If not JSON, assume it's plain text and read it
         const successText = await response.text();
@@ -128,12 +134,13 @@ export default function CustomClearanceForm() {
       // No need to reset formData here if the form is being hidden
       // setFormData({ ... });
       // setIsWithholdingTaxApplicable(false); // Reset UI state as well
-
     } catch (error) {
       console.error("Error submitting receipt data:", error);
       // Enhanced error handling for network-related issues
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        setMessage("Network error: Could not connect to the server. Please check your internet connection or try again later. This might also be a CORS issue. ❌");
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        setMessage(
+          "Network error: Could not connect to the server. Please check your internet connection or try again later. This might also be a CORS issue. ❌"
+        );
       } else if (error instanceof Error) {
         setMessage(`Failed to submit data. Error: ${error.message} ❌`);
       } else {
@@ -159,13 +166,19 @@ export default function CustomClearanceForm() {
       {/* Conditional Rendering: Show success message or the form */}
       {isSubmitted ? (
         <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-xl border border-gray-200">
-          <h2 className="text-3xl font-extrabold text-green-600 mb-4">Submission Successful! 🎉</h2>
-          <p className="text-gray-700 text-lg">Your custom clearance receipt details have been successfully recorded.</p>
+          <h2 className="text-3xl font-extrabold text-green-600 mb-4">
+            Submission Successful! 🎉
+          </h2>
+          <p className="text-gray-700 text-lg">
+            Your custom clearance receipt details have been successfully
+            recorded.
+          </p>
           <button
             onClick={() => {
               setIsSubmitted(false); // Allow submitting another form
               setMessage(null); // Clear message
-              setFormData({ // Reset form data for a new submission
+              setFormData({
+                // Reset form data for a new submission
                 receiptnumber: "",
                 receiptdate: "",
                 receiptmachinenumber: "",
@@ -191,12 +204,18 @@ export default function CustomClearanceForm() {
             Custom Clearance Agent Fee (Receipt)
           </h2>
           {message && (
-            <div className={`mb-4 p-3 rounded ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div
+              className={`mb-4 p-3 rounded ${
+                message.includes("✅")
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
               {message}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-6">
             {/* Amount Before Tax */}
             <div>
               <label
@@ -209,7 +228,9 @@ export default function CustomClearanceForm() {
                 type="number"
                 id="amountbeforetax"
                 name="amountbeforetax"
-                value={formData.amountbeforetax === 0 ? "" : formData.amountbeforetax} // Display empty if 0 for better UX
+                value={
+                  formData.amountbeforetax === 0 ? "" : formData.amountbeforetax
+                } // Display empty if 0 for better UX
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                 required
@@ -250,7 +271,11 @@ export default function CustomClearanceForm() {
                     type="number"
                     id="withholdingamount"
                     name="withholdingamount"
-                    value={formData.withholdingamount === 0 ? "" : formData.withholdingamount} // Display empty if 0 for better UX
+                    value={
+                      formData.withholdingamount === 0
+                        ? ""
+                        : formData.withholdingamount
+                    } // Display empty if 0 for better UX
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required={isWithholdingTaxApplicable} // Make required if applicable
