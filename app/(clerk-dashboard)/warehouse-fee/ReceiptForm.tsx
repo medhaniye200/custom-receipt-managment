@@ -27,11 +27,14 @@ export default function TransportFeeForm() {
     amountbeforetax: 0,
   });
 
-  const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] = useState<boolean>(false);
+  const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] =
+    useState<boolean>(false);
   const [message, setMessage] = useState<string | null>(null);
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false); // ✅ Track form submission
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
 
     if (name === "isWithholdingTaxApplicable") {
@@ -46,7 +49,8 @@ export default function TransportFeeForm() {
         }));
       }
     } else {
-      const processedValue = type === "number" ? (value === "" ? 0 : parseFloat(value)) : value;
+      const processedValue =
+        type === "number" ? (value === "" ? 0 : parseFloat(value)) : value;
       setFormData((prev) => ({ ...prev, [name]: processedValue }));
     }
   };
@@ -58,7 +62,9 @@ export default function TransportFeeForm() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setMessage("Authentication error: Token missing. Please log in again. ❌");
+      setMessage(
+        "Authentication error: Token missing. Please log in again. ❌"
+      );
       return;
     }
 
@@ -71,7 +77,7 @@ export default function TransportFeeForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -93,10 +99,14 @@ export default function TransportFeeForm() {
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
-        setMessage(data.message || "Transport fee receipt submitted successfully! ✅");
+        setMessage(
+          data.message || "Transport fee receipt submitted successfully! ✅"
+        );
       } else {
         const successText = await response.text();
-        setMessage(successText || "Transport fee receipt submitted successfully! ✅");
+        setMessage(
+          successText || "Transport fee receipt submitted successfully! ✅"
+        );
       }
 
       setFormSubmitted(true); // ✅ Form is now submitted
@@ -112,11 +122,9 @@ export default function TransportFeeForm() {
         amountbeforetax: 0,
       });
 
-      
-
       setIsWithholdingTaxApplicable(false);
     } catch (error) {
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
         setMessage("Network error: Could not connect to the server. ❌");
       } else if (error instanceof Error) {
         setMessage(`Failed to submit data. Error: ${error.message} ❌`);
@@ -127,10 +135,16 @@ export default function TransportFeeForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-xl bg-white p-6 rounded shadow">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-1">
+      <div className="w-full max-w-xl bg-white p-1 rounded shadow">
         {message && (
-          <div className={`mb-4 p-3 rounded ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div
+            className={`mb-4 p-3 rounded ${
+              message.includes("✅")
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
             {message}
           </div>
         )}
@@ -138,17 +152,24 @@ export default function TransportFeeForm() {
         {!formSubmitted ? (
           <form onSubmit={handleSubmit}>
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-              Transport Fee Form (Receipt Details)
+              warehouse Fee
             </h2>
 
             {/* Amount Before Tax */}
             <div className="mb-4">
-              <label htmlFor="amountbeforetax" className="block font-medium mb-1">Amount Before Tax</label>
+              <label
+                htmlFor="amountbeforetax"
+                className="block font-medium mb-1"
+              >
+                Amount Before Tax
+              </label>
               <input
                 type="number"
                 id="amountbeforetax"
                 name="amountbeforetax"
-                value={formData.amountbeforetax === 0 ? "" : formData.amountbeforetax}
+                value={
+                  formData.amountbeforetax === 0 ? "" : formData.amountbeforetax
+                }
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
                 placeholder="1000.00"
@@ -158,7 +179,12 @@ export default function TransportFeeForm() {
 
             {/* Withholding Tax Applicable */}
             <div className="mb-4">
-              <label htmlFor="isWithholdingTaxApplicable" className="block font-medium mb-1">Withholding Tax Applicable?</label>
+              <label
+                htmlFor="isWithholdingTaxApplicable"
+                className="block font-medium mb-1"
+              >
+                Withholding Tax Applicable?
+              </label>
               <select
                 id="isWithholdingTaxApplicable"
                 name="isWithholdingTaxApplicable"
@@ -175,12 +201,21 @@ export default function TransportFeeForm() {
             {isWithholdingTaxApplicable && (
               <>
                 <div className="mb-4">
-                  <label htmlFor="withholdingamount" className="block font-medium mb-1">Withholding Amount</label>
+                  <label
+                    htmlFor="withholdingamount"
+                    className="block font-medium mb-1"
+                  >
+                    Withholding Amount
+                  </label>
                   <input
                     type="number"
                     id="withholdingamount"
                     name="withholdingamount"
-                    value={formData.withholdingamount === 0 ? "" : formData.withholdingamount}
+                    value={
+                      formData.withholdingamount === 0
+                        ? ""
+                        : formData.withholdingamount
+                    }
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                     placeholder="500.00"
@@ -189,7 +224,12 @@ export default function TransportFeeForm() {
                 </div>
 
                 <div className="mb-4">
-                  <label htmlFor="withholdingtaxreceiptno" className="block font-medium mb-1">Withholding Tax Receipt No.</label>
+                  <label
+                    htmlFor="withholdingtaxreceiptno"
+                    className="block font-medium mb-1"
+                  >
+                    Withholding Tax Receipt No.
+                  </label>
                   <input
                     type="text"
                     id="withholdingtaxreceiptno"
@@ -203,7 +243,12 @@ export default function TransportFeeForm() {
                 </div>
 
                 <div className="mb-4">
-                  <label htmlFor="withholdingtaxReceiptdate" className="block font-medium mb-1">Withholding Tax Receipt Date</label>
+                  <label
+                    htmlFor="withholdingtaxReceiptdate"
+                    className="block font-medium mb-1"
+                  >
+                    Withholding Tax Receipt Date
+                  </label>
                   <input
                     type="date"
                     id="withholdingtaxReceiptdate"
@@ -219,7 +264,9 @@ export default function TransportFeeForm() {
 
             {/* Other Receipt Fields */}
             <div className="mb-4">
-              <label htmlFor="receiptnumber" className="block font-medium mb-1">Receipt Number</label>
+              <label htmlFor="receiptnumber" className="block font-medium mb-1">
+                Receipt Number
+              </label>
               <input
                 type="text"
                 id="receiptnumber"
@@ -233,7 +280,12 @@ export default function TransportFeeForm() {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="receiptmachinenumber" className="block font-medium mb-1">Receipt Machine Number</label>
+              <label
+                htmlFor="receiptmachinenumber"
+                className="block font-medium mb-1"
+              >
+                Receipt Machine Number
+              </label>
               <input
                 type="text"
                 id="receiptmachinenumber"
@@ -247,7 +299,12 @@ export default function TransportFeeForm() {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="receiptcalendar" className="block font-medium mb-1">Receipt Calendar</label>
+              <label
+                htmlFor="receiptcalendar"
+                className="block font-medium mb-1"
+              >
+                Receipt Calendar
+              </label>
               <input
                 type="text"
                 id="receiptcalendar"
@@ -261,13 +318,20 @@ export default function TransportFeeForm() {
             </div>
 
             <div className="mb-6">
-              <label htmlFor="receiptdate" className="block font-medium mb-1">Receipt Date</label>
+              <label htmlFor="receiptdate" className="block font-medium mb-1">
+                Receipt Date
+              </label>
               <DatePicker
                 id="receiptdate"
-                selected={formData.receiptdate ? new Date(formData.receiptdate) : null}
+                selected={
+                  formData.receiptdate ? new Date(formData.receiptdate) : null
+                }
                 onChange={(date: Date | null) => {
                   const formattedDate = date ? format(date, "dd-MM-yyyy") : "";
-                  setFormData((prev) => ({ ...prev, receiptdate: formattedDate }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    receiptdate: formattedDate,
+                  }));
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"

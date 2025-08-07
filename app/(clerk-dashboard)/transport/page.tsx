@@ -5,7 +5,7 @@ import WarehouseFeeForm from "../components/transportFileViewer";
 
 export default function Home() {
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
+    <div className="flex flex-col bg-gray-100">
       {/* Left Column: Transport Fee Form */}
       <div className="w-full lg:w-1/3 p-4 border-r border-gray-200 lg:h-screen lg:overflow-y-auto">
         <TransportFeeForm />

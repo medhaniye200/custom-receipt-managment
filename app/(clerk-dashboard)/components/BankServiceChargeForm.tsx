@@ -45,7 +45,9 @@ export default function BankServiceFeeForm() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setMessage("Authentication error: User ID or token is missing. Please log in again. ❌");
+      setMessage(
+        "Authentication error: User ID or token is missing. Please log in again. ❌"
+      );
       return;
     }
 
@@ -58,7 +60,7 @@ export default function BankServiceFeeForm() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         }
@@ -82,11 +84,15 @@ export default function BankServiceFeeForm() {
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log("Success:", data);
-        setMessage(data.message || "Bank permit details submitted successfully! ✅");
+        setMessage(
+          data.message || "Bank permit details submitted successfully! ✅"
+        );
       } else {
         const successText = await response.text();
         console.log("Success:", successText);
-        setMessage(successText || "Bank permit details submitted successfully! ✅");
+        setMessage(
+          successText || "Bank permit details submitted successfully! ✅"
+        );
       }
 
       alert("submitted successfully");
@@ -95,7 +101,6 @@ export default function BankServiceFeeForm() {
 
       // No need to reset the form data here if you're unmounting the form
       // setFormData({ ... });
-
     } catch (error) {
       console.error("Error submitting bank permit data:", error);
       if (error instanceof Error) {
@@ -121,8 +126,13 @@ export default function BankServiceFeeForm() {
       {/* 3. Conditional rendering to show either the form or the success message */}
       {isSubmitted ? (
         <div className="text-center p-8 bg-white rounded shadow-lg max-w-xl">
-          <h2 className="text-2xl font-bold text-green-600 mb-4">Submission Successful!</h2>
-          <p className="text-gray-700">Thank you for submitting the bank permit details. A new record has been created.</p>
+          <h2 className="text-2xl font-bold text-green-600 mb-4">
+            Submission Successful!
+          </h2>
+          <p className="text-gray-700">
+            Thank you for submitting the bank permit details. A new record has
+            been created.
+          </p>
         </div>
       ) : (
         <form
@@ -133,7 +143,13 @@ export default function BankServiceFeeForm() {
             Bank Permit Details Form
           </h2>
           {message && (
-            <div className={`mb-4 p-3 rounded ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div
+              className={`mb-4 p-3 rounded ${
+                message.includes("✅")
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -141,7 +157,9 @@ export default function BankServiceFeeForm() {
           {/* All your form input fields go here */}
           {/* ... */}
           <div className="mb-4">
-            <label htmlFor="bankname" className="block font-medium mb-1">Bank Name</label>
+            <label htmlFor="bankname" className="block font-medium mb-1">
+              Bank Name
+            </label>
             <input
               type="text"
               id="bankname"
@@ -155,7 +173,9 @@ export default function BankServiceFeeForm() {
           </div>
           {/* ... (rest of the form fields) */}
           <div className="mb-4">
-            <label htmlFor="permitno" className="block font-medium mb-1">Permit Number</label>
+            <label htmlFor="permitno" className="block font-medium mb-1">
+              Permit Number
+            </label>
             <input
               type="text"
               id="permitno"
@@ -168,7 +188,9 @@ export default function BankServiceFeeForm() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="permitamount" className="block font-medium mb-1">Permit Amount</label>
+            <label htmlFor="permitamount" className="block font-medium mb-1">
+              Permit Amount
+            </label>
             <input
               type="number"
               id="permitamount"
@@ -181,7 +203,9 @@ export default function BankServiceFeeForm() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="bankreference" className="block font-medium mb-1">Bank Reference</label>
+            <label htmlFor="bankreference" className="block font-medium mb-1">
+              Bank Reference
+            </label>
             <input
               type="text"
               id="bankreference"
@@ -194,7 +218,9 @@ export default function BankServiceFeeForm() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="bankservice" className="block font-medium mb-1">Bank Service</label>
+            <label htmlFor="bankservice" className="block font-medium mb-1">
+              Bank Service
+            </label>
             <input
               type="number"
               id="bankservice"
@@ -207,7 +233,9 @@ export default function BankServiceFeeForm() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="bankdate" className="block font-medium mb-1">Bank Date</label>
+            <label htmlFor="bankdate" className="block font-medium mb-1">
+              Bank Date
+            </label>
             <input
               type="date"
               id="bankdate"
@@ -219,7 +247,9 @@ export default function BankServiceFeeForm() {
             />
           </div>
           <div className="mb-6">
-            <label htmlFor="bankpermitdate" className="block font-medium mb-1">Bank Permit Date</label>
+            <label htmlFor="bankpermitdate" className="block font-medium mb-1">
+              Bank Permit Date
+            </label>
             <input
               type="date"
               id="bankpermitdate"
