@@ -95,7 +95,6 @@ export default function BankServiceFeeForm() {
         );
       }
 
-      alert("submitted successfully");
       // 2. Set the success state to true
       setIsSubmitted(true);
 

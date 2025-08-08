@@ -1,10 +1,11 @@
 "use client";
+
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useState, FormEvent, ChangeEvent } from "react";
 import { format } from "date-fns";
 
-interface WarehouseFeePayload {
+interface ClearanceFeePayload {
   receiptnumber: string;
   receiptdate: string;
   receiptmachinenumber: string;
@@ -15,8 +16,8 @@ interface WarehouseFeePayload {
   amountbeforetax: number;
 }
 
-export default function WarehouseFeeForm() {
-  const [formData, setFormData] = useState<WarehouseFeePayload>({
+export default function ClearanceFeeForm() {
+  const [formData, setFormData] = useState<ClearanceFeePayload>({
     receiptnumber: "",
     receiptdate: "",
     receiptmachinenumber: "",
@@ -60,16 +61,26 @@ export default function WarehouseFeeForm() {
     setMessage(null);
 
     const token = localStorage.getItem("token");
-
     if (!token) {
       setMessage("Authentication error: Token missing. Please log in again. ❌");
       return;
     }
 
-    const payload: WarehouseFeePayload = formData;
+    const payload: ClearanceFeePayload = {
+      ...formData,
+      withholdingtaxreceiptno: isWithholdingTaxApplicable
+        ? formData.withholdingtaxreceiptno
+        : "",
+      withholdingtaxReceiptdate: isWithholdingTaxApplicable
+        ? formData.withholdingtaxReceiptdate
+        : "",
+      withholdingamount: isWithholdingTaxApplicable
+        ? formData.withholdingamount
+        : 0,
+    };
 
     try {
-      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/warehouseInfo/${97645398}`;
+      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/clearanceInfo/${97645398}`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -98,17 +109,16 @@ export default function WarehouseFeeForm() {
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         setMessage(
-          data.message || "Warehouse fee receipt submitted successfully! ✅"
+          data.message || "Clearance fee receipt submitted successfully! ✅"
         );
       } else {
         const successText = await response.text();
         setMessage(
-          successText || "Warehouse fee receipt submitted successfully! ✅"
+          successText || "Clearance fee receipt submitted successfully! ✅"
         );
       }
 
       setFormSubmitted(true);
-
       setFormData({
         receiptnumber: "",
         receiptdate: "",
@@ -119,7 +129,6 @@ export default function WarehouseFeeForm() {
         withholdingamount: 0,
         amountbeforetax: 0,
       });
-
       setIsWithholdingTaxApplicable(false);
     } catch (error) {
       if (error instanceof TypeError && error.message === "Failed to fetch") {
@@ -138,24 +147,28 @@ export default function WarehouseFeeForm() {
         {!formSubmitted ? (
           <form onSubmit={handleSubmit}>
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-              Warehouse Fee
+              Clearance Fee
             </h2>
 
-            {/* Amount Before Tax */}
+            {message && (
+              <div className={`mb-4 p-3 rounded ${
+                message.includes("✅")
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}>
+                {message}
+              </div>
+            )}
+
             <div className="mb-4">
-              <label
-                htmlFor="amountbeforetax"
-                className="block font-medium mb-1"
-              >
+              <label htmlFor="amountbeforetax" className="block font-medium mb-1">
                 Amount Before Tax
               </label>
               <input
                 type="number"
                 id="amountbeforetax"
                 name="amountbeforetax"
-                value={
-                  formData.amountbeforetax === 0 ? "" : formData.amountbeforetax
-                }
+                value={formData.amountbeforetax === 0 ? "" : formData.amountbeforetax}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
                 placeholder="1000.00"
@@ -163,12 +176,8 @@ export default function WarehouseFeeForm() {
               />
             </div>
 
-            {/* Withholding Tax Applicable */}
             <div className="mb-4">
-              <label
-                htmlFor="isWithholdingTaxApplicable"
-                className="block font-medium mb-1"
-              >
+              <label htmlFor="isWithholdingTaxApplicable" className="block font-medium mb-1">
                 Withholding Tax Applicable?
               </label>
               <select
@@ -183,25 +192,17 @@ export default function WarehouseFeeForm() {
               </select>
             </div>
 
-            {/* Withholding Fields */}
             {isWithholdingTaxApplicable && (
               <>
                 <div className="mb-4">
-                  <label
-                    htmlFor="withholdingamount"
-                    className="block font-medium mb-1"
-                  >
+                  <label htmlFor="withholdingamount" className="block font-medium mb-1">
                     Withholding Amount
                   </label>
                   <input
                     type="number"
                     id="withholdingamount"
                     name="withholdingamount"
-                    value={
-                      formData.withholdingamount === 0
-                        ? ""
-                        : formData.withholdingamount
-                    }
+                    value={formData.withholdingamount === 0 ? "" : formData.withholdingamount}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                     placeholder="500.00"
@@ -210,10 +211,7 @@ export default function WarehouseFeeForm() {
                 </div>
 
                 <div className="mb-4">
-                  <label
-                    htmlFor="withholdingtaxreceiptno"
-                    className="block font-medium mb-1"
-                  >
+                  <label htmlFor="withholdingtaxreceiptno" className="block font-medium mb-1">
                     Withholding Tax Receipt No.
                   </label>
                   <input
@@ -248,7 +246,6 @@ export default function WarehouseFeeForm() {
               </>
             )}
 
-            {/* Other Receipt Details */}
             <div className="mb-4">
               <label htmlFor="receiptnumber" className="block font-medium mb-1">
                 Receipt Number
@@ -266,10 +263,7 @@ export default function WarehouseFeeForm() {
             </div>
 
             <div className="mb-4">
-              <label
-                htmlFor="receiptmachinenumber"
-                className="block font-medium mb-1"
-              >
+              <label htmlFor="receiptmachinenumber" className="block font-medium mb-1">
                 Receipt Machine Number
               </label>
               <input
@@ -285,10 +279,7 @@ export default function WarehouseFeeForm() {
             </div>
 
             <div className="mb-4">
-              <label
-                htmlFor="receiptcalendar"
-                className="block font-medium mb-1"
-              >
+              <label htmlFor="receiptcalendar" className="block font-medium mb-1">
                 Receipt Calendar
               </label>
               <input

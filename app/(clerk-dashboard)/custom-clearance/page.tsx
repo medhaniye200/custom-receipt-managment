@@ -1,6 +1,6 @@
 "use client";
 
-import CustomClearanceFeeForm from "../components/CustomClearanceForm";
+import CustomClearanceFeeForm from "../components/ClearanceForm";
 import WarehouseFileViewer from "../components/clearanceFileViewer";
 
 export default function MainLayout() {

@@ -221,7 +221,7 @@ function ItemRow({
                   index,
                   taxIndex,
                   "value",
-                  Number(e.target.value)
+                  Number(e.target.value)/100
                 )
               }
               className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
