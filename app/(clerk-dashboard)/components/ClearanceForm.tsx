@@ -14,6 +14,7 @@ interface ClearanceFeePayload {
   withholdingtaxReceiptdate: string;
   withholdingamount: number;
   amountbeforetax: number;
+  declarationnumber: string;
 }
 
 export default function ClearanceFeeForm() {
@@ -26,6 +27,7 @@ export default function ClearanceFeeForm() {
     withholdingtaxReceiptdate: "",
     withholdingamount: 0,
     amountbeforetax: 0,
+    declarationnumber:""
   });
 
   const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] =
@@ -80,7 +82,7 @@ export default function ClearanceFeeForm() {
     };
 
     try {
-      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/clearanceInfo/${97645398}`;
+      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/clearanceInfo/${formData.declarationnumber}`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -128,6 +130,7 @@ export default function ClearanceFeeForm() {
         withholdingtaxReceiptdate: "",
         withholdingamount: 0,
         amountbeforetax: 0,
+        declarationnumber:"",
       });
       setIsWithholdingTaxApplicable(false);
     } catch (error) {
@@ -246,6 +249,22 @@ export default function ClearanceFeeForm() {
               </>
             )}
 
+            <div className="mb-4">
+              <label htmlFor="receiptnumber" className="block font-medium mb-1">
+                Declaration Number
+              </label>
+              <input
+                type="text"
+                id="receiptnumber"
+                name="receiptnumber"
+                value={formData.declarationnumber}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+                placeholder="R123456"
+                required
+              />
+            </div>
+            
             <div className="mb-4">
               <label htmlFor="receiptnumber" className="block font-medium mb-1">
                 Receipt Number

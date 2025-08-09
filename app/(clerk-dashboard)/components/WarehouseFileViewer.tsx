@@ -332,26 +332,26 @@ export default function WarehouseFileViewer() {
                 }`}
               />
             </button>
-            {expandedUsers.has(user.userId) && (
-              <div className="pt-4 border-t mt-4">
-                {user.documents.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                    {user.documents.map((doc, docIndex) => (
-                      <FilePreview
-                        key={docIndex}
-                        label={doc.label}
-                        url={doc.base64Data}
-                        onPreviewClick={handleOpenPreview}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 italic text-center py-4">
-                    No specific files uploaded for this user.
-                  </p>
-                )}
-              </div>
-            )}
+          {expandedUsers.has(user.userId) && (
+  <div className="pt-4 border-t mt-4">
+    {user.documents.length > 0 ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+        {user.documents.map((doc) => (
+          <FilePreview
+            key={`${user.userId}-${doc.label}`}
+            label={doc.label}
+            url={doc.base64Data}
+            onPreviewClick={handleOpenPreview}
+          />
+        ))}
+      </div>
+    ) : (
+      <p className="text-gray-600 italic text-center py-4">
+        No specific files uploaded for this user.
+      </p>
+    )}
+  </div>
+)}
           </div>
         ))
       )}

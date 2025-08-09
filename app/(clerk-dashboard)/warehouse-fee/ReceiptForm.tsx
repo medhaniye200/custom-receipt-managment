@@ -13,6 +13,8 @@ interface WarehouseFeePayload {
   withholdingtaxReceiptdate: string;
   withholdingamount: number;
   amountbeforetax: number;
+  declarationnumber: string
+  
 }
 
 export default function WarehouseFeeForm() {
@@ -25,6 +27,7 @@ export default function WarehouseFeeForm() {
     withholdingtaxReceiptdate: "",
     withholdingamount: 0,
     amountbeforetax: 0,
+    declarationnumber:""
   });
 
   const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] =
@@ -69,7 +72,7 @@ export default function WarehouseFeeForm() {
     const payload: WarehouseFeePayload = formData;
 
     try {
-      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/warehouseInfo/${97645398}`;
+      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/warehouseInfo/${formData.declarationnumber}`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -87,9 +90,15 @@ export default function WarehouseFeeForm() {
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
+            
+          // Add specific handling for 409 Conflict
+          if (response.status === 409) {
+            setMessage("Declaration is already taken. Please use a different one.");
+          }
         } else {
           const errorText = await response.text();
           errorMessage = errorText || response.statusText || errorMessage;
+          setMessage(errorMessage)
         }
         throw new Error(errorMessage);
       }
@@ -118,6 +127,7 @@ export default function WarehouseFeeForm() {
         withholdingtaxReceiptdate: "",
         withholdingamount: 0,
         amountbeforetax: 0,
+        declarationnumber:""
       });
 
       setIsWithholdingTaxApplicable(false);
@@ -135,6 +145,11 @@ export default function WarehouseFeeForm() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-xl bg-white p-6 rounded shadow">
+        {message && (
+  <div className={`mb-4 p-3 rounded ${message.includes("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+    {message}
+  </div>
+)}
         {!formSubmitted ? (
           <form onSubmit={handleSubmit}>
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">
@@ -247,7 +262,21 @@ export default function WarehouseFeeForm() {
                 </div>
               </>
             )}
-
+  <div className="mb-4">
+              <label htmlFor="declarationnumber" className="block font-medium mb-1">
+                declaration number
+              </label>
+              <input
+                type="text"
+                id="declarationnumber"
+                name="declarationnumber"
+                value={formData.declarationnumber}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+                placeholder="D123456"
+                required
+              />
+            </div>
             {/* Other Receipt Details */}
             <div className="mb-4">
               <label htmlFor="receiptnumber" className="block font-medium mb-1">

@@ -13,6 +13,8 @@ interface TransportFeePayload {
   withholdingtaxReceiptdate: string;
   withholdingamount: number;
   amountbeforetax: number;
+   declarationnumber:"",
+
 }
 
 export default function TransportFeeForm() {
@@ -25,6 +27,8 @@ export default function TransportFeeForm() {
     withholdingtaxReceiptdate: "",
     withholdingamount: 0,
     amountbeforetax: 0,
+    declarationnumber:"",
+
   });
 
   const [isWithholdingTaxApplicable, setIsWithholdingTaxApplicable] =
@@ -62,16 +66,14 @@ export default function TransportFeeForm() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setMessage(
-        "Authentication error: Token missing. Please log in again. ❌"
-      );
+      setMessage("Authentication error: Token missing. Please log in again. ❌");
       return;
     }
 
     const payload: TransportFeePayload = formData;
 
     try {
-      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/transportInfo/${97645398}`;
+      const apiUrl = `https://customreceiptmanagement.onrender.com/api/v1/clerk/transportInfo/${declarationnumber}`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -89,6 +91,11 @@ export default function TransportFeeForm() {
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
+          
+          // Add specific handling for 409 Conflict
+          if (response.status === 409) {
+            alert("Declaration is already taken. Please use a different one.");
+          }
         } else {
           const errorText = await response.text();
           errorMessage = errorText || response.statusText || errorMessage;
@@ -99,18 +106,19 @@ export default function TransportFeeForm() {
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
-        setMessage(
-          data.message || "Transport fee receipt submitted successfully! ✅"
-        );
+        const successMsg = data.message || "Transport fee receipt submitted successfully! ✅";
+        setMessage(successMsg);
+       
       } else {
         const successText = await response.text();
-        setMessage(
-          successText || "Transport fee receipt submitted successfully! ✅"
-        );
+        const successMsg = successText || "Transport fee receipt submitted successfully! ✅";
+        setMessage(successMsg);
+       
       }
 
-      setFormSubmitted(true); // ✅ Mark form as submitted
+      setFormSubmitted(true);
 
+      // Reset form
       setFormData({
         receiptnumber: "",
         receiptdate: "",
@@ -120,16 +128,27 @@ export default function TransportFeeForm() {
         withholdingtaxReceiptdate: "",
         withholdingamount: 0,
         amountbeforetax: 0,
+        declarationnumber:"",
       });
 
       setIsWithholdingTaxApplicable(false);
     } catch (error) {
       if (error instanceof TypeError && error.message === "Failed to fetch") {
-        setMessage("Network error: Could not connect to the server. ❌");
+        const errMsg = "Network error: Could not connect to the server. ❌";
+        setMessage(errMsg);
+       
       } else if (error instanceof Error) {
-        setMessage(`Failed to submit data. Error: ${error.message} ❌`);
+        const errMsg = `Failed to submit data. Error: ${error.message} ❌`;
+        setMessage(errMsg);
+        
+        // Only show alert if not already shown for 409 error
+        if (!error.message.includes("Declaration is already taken")) {
+      
+        }
       } else {
-        setMessage("Failed to submit data. An unknown error occurred. ❌");
+        const errMsg = "Failed to submit data. An unknown error occurred. ❌";
+        setMessage(errMsg);
+        
       }
     }
   };
@@ -249,6 +268,21 @@ export default function TransportFeeForm() {
                 </div>
               </>
             )}
+             <div className="mb-4">
+              <label htmlFor="receiptnumber" className="block font-medium mb-1">
+                declaration Number
+              </label>
+              <input
+                type="text"
+                id="declarationnumber"
+                name="declarationnumber"
+                value={formData.declarationnumber}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+                placeholder="D123456"
+                required
+              />
+            </div>
 
             {/* Other Receipt Details */}
             <div className="mb-4">
