@@ -305,32 +305,28 @@ export default function CommercialInvoiceViewer() {
   }
 
   // Main view: display list of commercial invoice cards
-  return (
-    <div className="p-4 bg-gray-50 min-h-screen flex justify-center items-start">
-      <div className="w-full max-w-4xl">
-        {" "}
-        {/* Set max-w for the main grid to 2/3 */}
-        <h1 className="text-2xl font-bold text-gray-800 mb-8 text-center">
-          Commercial Invoices
-        </h1>
-        {userDocuments.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
-            <p className="text-gray-600">No commercial invoices available.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {" "}
-            {/* Changed to 1 column for accordion style */}
-            {userDocuments.map((user) => (
-              <CommercialInvoiceCard
-                key={user.userId}
-                user={user}
-                onPreviewClick={handleOpenPreview}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+ return (
+  <div className="p-4 bg-gray-50 min-h-screen flex justify-center items-start">
+    <div className="w-full max-w-4xl">
+      <h1 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+        Commercial Invoices
+      </h1>
+      {userDocuments.length === 0 ? (
+        <div key="no-invoices" className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
+          <p className="text-gray-600">No commercial invoices available.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6">
+          {userDocuments.map((user) => (
+            <CommercialInvoiceCard
+              key={`${user.userId}-${user.tinNumebr}`}
+              user={user}
+              onPreviewClick={handleOpenPreview}
+            />
+          ))}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 }
