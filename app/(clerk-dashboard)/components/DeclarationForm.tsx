@@ -221,13 +221,13 @@ function ItemRow({
                   index,
                   taxIndex,
                   "value",
-                  Number(e.target.value)/100
+                  Number(e.target.value)
                 )
               }
               className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
               required
               min="0"
-              step="0.00001"
+              // step="0.1"
               // readOnly
             />
           </td>
@@ -466,7 +466,7 @@ export default function DeclarationForm() {
       console.log("Full Submission Data:", submissionData);
 
       const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${1234554321}`,
+        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${formData.declarationnumber}`,
         {
           method: "POST",
           headers: {
@@ -604,7 +604,6 @@ export default function DeclarationForm() {
             onChange={handleChange}
           />
         </div>
-
         <div className="mt-4">
           <h3 className="text-md font-semibold mb-2">Items with Taxes</h3>
           <div className="overflow-x-auto rounded-lg border border-gray-200">
