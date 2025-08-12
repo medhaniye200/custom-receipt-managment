@@ -7,6 +7,22 @@ interface CommercialInvoicePayload {
   amountcommercialinvoce: number;
 }
 
+interface ApiResponse {
+  message?: string;
+  [key: string]: unknown;
+}
+
+interface FormElements extends HTMLFormControlsCollection {
+  declarationnumber: HTMLInputElement;
+  commertialDate: HTMLInputElement;
+  invoiceno: HTMLInputElement;
+  amountcommercialinvoce: HTMLInputElement;
+}
+
+interface CommercialInvoiceFormElement extends HTMLFormElement {
+  readonly elements: FormElements;
+}
+
 export default function CommercialInvoiceForm() {
   const [formData, setFormData] = useState<CommercialInvoicePayload>({
     commertialDate: "",
@@ -14,10 +30,11 @@ export default function CommercialInvoiceForm() {
     amountcommercialinvoce: 0,
   });
 
-  const [declarationnumber, setDeclarationNumber] = useState<string>("");
+  const [declarationnumber, setDeclarationNumber] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isDuplicate, setIsDuplicate] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -37,15 +54,32 @@ export default function CommercialInvoiceForm() {
     }
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const validateForm = (): boolean => {
+    if (!declarationnumber.trim()) {
+      setMessage("Declaration number is required");
+      return false;
+    }
+    if (!formData.commertialDate) {
+      setMessage("Commercial date is required");
+      return false;
+    }
+    if (!formData.invoiceno.trim()) {
+      setMessage("Invoice number is required");
+      return false;
+    }
+    if (formData.amountcommercialinvoce <= 0) {
+      setMessage("Amount must be greater than 0");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: FormEvent<CommercialInvoiceFormElement>) => {
     e.preventDefault();
     setMessage(null);
     setIsDuplicate(false);
     
-    if (!declarationnumber) {
-      setMessage("Declaration number is required");
-      return;
-    }
+    if (!validateForm()) return;
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -53,6 +87,7 @@ export default function CommercialInvoiceForm() {
       return;
     }
 
+    setIsLoading(true);
     try {
       const response = await fetch(
         `https://customreceiptmanagement.onrender.com/api/v1/clerk/commercialinvoice/${declarationnumber}`,
@@ -66,10 +101,10 @@ export default function CommercialInvoiceForm() {
         }
       );
 
+      let data: ApiResponse;
       const contentType = response.headers.get("content-type");
-      let data: any;
 
-      if (contentType && contentType.includes("application/json")) {
+      if (contentType?.includes("application/json")) {
         data = await response.json();
       } else {
         const textData = await response.text();
@@ -89,8 +124,6 @@ export default function CommercialInvoiceForm() {
 
       setMessage(data.message || "Commercial invoice submitted successfully! ✅");
       setFormSubmitted(true);
-
-      // Reset form
       setFormData({
         commertialDate: "",
         invoiceno: "",
@@ -99,11 +132,11 @@ export default function CommercialInvoiceForm() {
       setDeclarationNumber("");
 
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit data. Please try again. ❌"
-      );
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit data. Please try again. ❌";
+      setMessage(errorMessage);
+      console.error("Submission error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -124,7 +157,6 @@ export default function CommercialInvoiceForm() {
               Commercial Invoice
             </h2>
 
-            {/* Declaration Number */}
             <div className="mb-4">
               <label htmlFor="declarationnumber" className="block font-medium mb-1">
                 Declaration Number
@@ -143,7 +175,6 @@ export default function CommercialInvoiceForm() {
               />
             </div>
 
-            {/* Commercial Date */}
             <div className="mb-4">
               <label htmlFor="commertialDate" className="block font-medium mb-1">
                 Commercial Date
@@ -159,7 +190,6 @@ export default function CommercialInvoiceForm() {
               />
             </div>
 
-            {/* Invoice Number */}
             <div className="mb-4">
               <label htmlFor="invoiceno" className="block font-medium mb-1">
                 Invoice Number
@@ -175,7 +205,6 @@ export default function CommercialInvoiceForm() {
               />
             </div>
 
-            {/* Commercial Invoice Amount */}
             <div className="mb-6">
               <label htmlFor="amountcommercialinvoce" className="block font-medium mb-1">
                 Commercial Invoice Amount
@@ -186,6 +215,8 @@ export default function CommercialInvoiceForm() {
                 name="amountcommercialinvoce"
                 value={formData.amountcommercialinvoce || ""}
                 onChange={handleChange}
+                min="0.01"
+                step="0.01"
                 className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
@@ -193,9 +224,12 @@ export default function CommercialInvoiceForm() {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={isLoading}
+              className={`w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              Submit
+              {isLoading ? "Submitting..." : "Submit"}
             </button>
           </form>
         ) : (
