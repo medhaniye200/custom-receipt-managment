@@ -21,6 +21,7 @@ type ItemManagementDto = {
 
 type FormData = {
   custombranchname: string;
+  tinNumber:string;
   declarationnumber: string;
   declarationdispensedate: string;
   fobamountusdt: number;
@@ -221,7 +222,7 @@ function ItemRow({
                   index,
                   taxIndex,
                   "value",
-                  Number(e.target.value)/100
+                  Number(e.target.value)
                 )
               }
               className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
@@ -275,6 +276,7 @@ export default function DeclarationForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     custombranchname: "",
+    tinNumber:"",
     declarationnumber: "",
     declarationdispensedate: "",
     fobamountusdt: 0,
@@ -439,6 +441,7 @@ export default function DeclarationForm() {
       // Step 2: Construct the final submission data object.
       const submissionData = {
         custombranchname: formData.custombranchname,
+        tinNumber: formData.tinNumber,
         declarationnumber: formData.declarationnumber,
         declarationdispensedate: formData.declarationdispensedate,
         fobamountusdt: Number(formData.fobamountusdt),
@@ -462,11 +465,9 @@ export default function DeclarationForm() {
         // This array contains all unique taxes from the entire declaration.
         taxApplicationdto: Array.from(allUniqueTaxes.values()),
       };
-
       console.log("Full Submission Data:", submissionData);
-
       const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${1234554321}`,
+        `https://customreceiptmanagement.onrender.com/api/v1/clerk/declarationInfo/${formData.tinNumber}`,
         {
           method: "POST",
           headers: {
@@ -489,6 +490,7 @@ export default function DeclarationForm() {
       // Reset form
       setFormData({
         custombranchname: "",
+        tinNumber:"",
         declarationnumber: "",
         declarationdispensedate: "",
         fobamountusdt: 0,
@@ -540,6 +542,12 @@ export default function DeclarationForm() {
             label="Branch Name"
             name="custombranchname"
             value={formData.custombranchname}
+            onChange={handleChange}
+          />
+           <InputField
+            label="Tin Number"
+            name="tinNumber"
+            value={formData.tinNumber}
             onChange={handleChange}
           />
           <InputField
