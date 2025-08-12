@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Eye, Download, ChevronDown, ArrowLeft, File } from "lucide-react";
-import { useRouter } from "next/navigation"; // Assuming Next.js router is still intended, though not directly used for navigation in this snippet.
-
+import { useRouter } from "next/navigation"; 
+import Image from "next/image";
 interface RawBankPermitFile {
   userId: string;
   tinNumebr: string;
@@ -23,8 +23,7 @@ interface UserDocument {
   bankPermitUrl: string;
 }
 
-const BASE_URL = "https://customreceiptmanagement.onrender.com"; // Base URL for the API
-
+const BASE_URL = "https://customreceiptmanagement.onrender.com"; 
 /**
  * Converts a base64 string to a data URL, ensuring it has the correct prefix.
  * @param base64String The base64 string of the file.
@@ -126,7 +125,7 @@ function BankPermitCard({
                       </p>
                     </div>
                   ) : (
-                    <img
+                    <Image
                       src={user.bankPermitUrl}
                       alt="Bank Permit"
                       className="max-h-full max-w-full object-contain"
@@ -197,6 +196,7 @@ export default function BankPermitViewer() {
             headers: { Authorization: `Bearer ${token}` }, // Add authorization header
           }
         );
+        console.log(res)
 
         // Process raw data to create data URLs for bank permits
         const processedData = res.data.map((item) => ({
@@ -283,7 +283,7 @@ export default function BankPermitViewer() {
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 />
               ) : (
-                <img
+                <Image
                   src={previewFile.url}
                   alt="Bank Permit"
                   className="max-w-full max-h-full object-contain p-4" // Added p-4 for padding
