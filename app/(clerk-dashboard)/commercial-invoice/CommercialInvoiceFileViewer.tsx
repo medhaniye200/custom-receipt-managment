@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Eye, Download, ChevronDown, ArrowLeft, File } from "lucide-react";
+import Image from "next/image";
+
 // Removed useRouter as it's not used in this specific component for navigation.
 
 interface CommercialInvoiceFile {
@@ -124,11 +126,11 @@ function CommercialInvoiceCard({
                         Click to preview PDF
                       </p>
                       <p className="text-gray-500 text-sm mt-1">
-                        {user.companyname}'s Commercial Invoice
+                        {`${user.companyname}'s Commercial Invoice`}
                       </p>
                     </div>
                   ) : (
-                    <img
+                    <Image
                       src={user.commercialInvoiceUrl}
                       alt="Commercial Invoice"
                       className="max-h-full max-w-full object-contain"
@@ -276,7 +278,7 @@ export default function CommercialInvoiceViewer() {
           <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
             <div className="bg-gray-50 px-6 py-4 border-b">
               <h2 className="text-xl font-bold text-gray-800">
-                {previewFile.companyName}'s Commercial Invoice
+              {`${previewFile.companyName}'s Commercial Invoice`}
               </h2>
             </div>
             <div className="h-[calc(100vh-200px)] flex items-center justify-center">
@@ -291,7 +293,8 @@ export default function CommercialInvoiceViewer() {
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 />
               ) : (
-                <img
+
+                <Image
                   src={previewFile.url}
                   alt="Commercial Invoice"
                   className="max-w-full max-h-full object-contain p-4" // Added p-4 for padding
