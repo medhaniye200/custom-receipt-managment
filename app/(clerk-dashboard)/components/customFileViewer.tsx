@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FaChevronDown } from "react-icons/fa";
+import { Download, X, Eye, ChevronDown, File, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { BASE_API_URL } from "../../import-api/ImportApi";
 
+// ---------------- Interfaces ----------------
 interface DocumentFile {
   label: string;
   base64Data: string;
@@ -15,7 +16,7 @@ interface UserDocument {
   userId: string;
   firstname: string;
   lastname: string;
-  tinNumber: string; // Changed from tinNumebr to tinNumber
+  tinNumber: string;
   companyname: string;
   documents: DocumentFile[];
 }
@@ -24,13 +25,14 @@ interface ApiDocumentItem {
   userId: string;
   firstname: string;
   lastname: string;
-  tinNumebr: string; // Keeping original API interface
+  tinNumebr: string;
   companyname: string;
   imagebaseCustomfile?: string;
   imagebaseBankPermitfile?: string;
   imageCummercialInvoicefile?: string;
 }
 
+// ---------------- Helper Functions ----------------
 const createDataUrl = (
   base64String: string | undefined | null,
   label: string
@@ -60,13 +62,33 @@ const createDataUrl = (
     mimeType = "application/octet-stream";
   }
 
-  return `data:${mimeType};base64,${base64String}`;
+  const cleanedBase64 = base64String
+    .replace(/^data:image\/\w+;base64,/, "")
+    .replace(/\s/g, "");
+
+  try {
+    window.atob(cleanedBase64);
+    return `data:${mimeType};base64,${cleanedBase64}`;
+  } catch (e) {
+    console.error("Invalid base64 string for:", label);
+    return "";
+  }
 };
 
-function FilePreview({ label, url }: { label: string; url: string }) {
+// ---------------- FilePreview Component ----------------
+function FilePreview({
+  label,
+  url,
+  onPreviewClick,
+}: {
+  label: string;
+  url: string;
+  onPreviewClick: (url: string, label: string) => void;
+}) {
+  // --- Check for empty URL at the start of the component ---
   if (!url) {
     return (
-      <div className="bg-gray-100 p-4 rounded shadow flex flex-col">
+      <div className="bg-gray-100 p-4 rounded shadow flex flex-col justify-between">
         <h3 className="text-md font-semibold mb-2">{label}</h3>
         <p className="text-gray-500">No file available.</p>
       </div>
@@ -110,49 +132,75 @@ function FilePreview({ label, url }: { label: string; url: string }) {
   };
 
   return (
-    <div className="bg-gray-100 p-4 rounded shadow flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-md font-semibold">{label}</h3>
+    <div className="bg-gray-100 p-4 rounded shadow flex flex-col justify-between">
+      <div>
+        <h3 className="text-md font-semibold mb-2">{label}</h3>
+        <div
+          className="w-full h-48 rounded cursor-pointer overflow-hidden flex items-center justify-center bg-gray-200"
+          onClick={() => onPreviewClick(url, label)}
+        >
+          {isImage ? (
+            <div className="relative w-full h-full">
+              <Image
+                src={url}
+                alt={label}
+                fill
+                className="object-contain"
+                unoptimized={true}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = "/image-error-placeholder.png";
+                }}
+              />
+            </div>
+          ) : isPdf ? (
+            <p className="text-blue-600 text-center p-4 flex items-center gap-2">
+              <File size={20} /> Click to view PDF
+            </p>
+          ) : (
+            <p className="text-gray-500">Unsupported file format</p>
+          )}
+        </div>
+      </div>
+      <div className="flex justify-between items-center mt-4 gap-2">
+        {(isImage || isPdf) && (
+          <button
+            onClick={() => onPreviewClick(url, label)}
+            className="flex-1 flex items-center justify-center gap-2 text-sm text-purple-600 hover:underline bg-purple-50 py-2 rounded cursor-pointer"
+          >
+            <Eye size={16} /> View
+          </button>
+        )}
         <button
           onClick={handleDownload}
-          className="text-blue-600 hover:underline text-sm bg-blue-50 py-1 px-3 rounded"
+          className="flex-1 flex items-center justify-center gap-2 text-sm text-blue-600 hover:underline bg-blue-50 py-2 rounded cursor-pointer"
         >
-          Download
+          <Download size={16} /> Download
         </button>
-      </div>
-
-      <div className="max-h-64 max-w-full overflow-auto border rounded bg-white">
-        {isImage ? (
-          <Image
-            src={url}
-            alt={label}
-            width={500}
-            height={300}
-            className="max-h-60 w-full object-contain p-2"
-            unoptimized={true}
-          />
-        ) : isPdf ? (
-          <iframe
-            src={url}
-            className="w-full h-60"
-            title={`Preview of ${label}`}
-            sandbox="allow-scripts allow-same-origin"
-          />
-        ) : (
-          <p className="text-red-500 text-sm text-center p-4">
-            Cannot preview this file type.
-          </p>
-        )}
       </div>
     </div>
   );
 }
 
+// ---------------- Main Component ----------------
 export default function CustomFileViewer() {
   const [userDocuments, setUserDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<{
+    url: string;
+    label: string;
+  } | null>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+
+  const handleOpenPreview = (url: string, label: string) => {
+    setPreviewFile({ url, label });
+  };
+
+  const handleClosePreview = () => {
+    setPreviewFile(null);
+  };
 
   const toggleExpand = (tinNumber: string) => {
     setExpandedUsers((prev) => {
@@ -189,44 +237,50 @@ export default function CustomFileViewer() {
         const grouped: Record<string, UserDocument> = {};
 
         rawData.forEach((item) => {
-          const tinNumber = item.tinNumebr; // Using tinNumber as the key
+          const tinNumber = item.tinNumebr;
           if (!grouped[tinNumber]) {
             grouped[tinNumber] = {
               userId: item.userId,
               firstname: item.firstname,
               lastname: item.lastname,
-              tinNumber: item.tinNumebr, // Mapping to corrected property name
+              tinNumber: item.tinNumebr,
               companyname: item.companyname,
               documents: [],
             };
           }
 
           if (item.imagebaseCustomfile) {
-            grouped[tinNumber].documents.push({
-              label: "Custom File",
-              base64Data: createDataUrl(
-                item.imagebaseCustomfile,
-                "Custom File"
-              ),
-            });
+            const url = createDataUrl(item.imagebaseCustomfile, "Custom File");
+            if (url) {
+              grouped[tinNumber].documents.push({
+                label: "Custom File",
+                base64Data: url,
+              });
+            }
           }
           if (item.imagebaseBankPermitfile) {
-            grouped[tinNumber].documents.push({
-              label: "Bank Permit File",
-              base64Data: createDataUrl(
-                item.imagebaseBankPermitfile,
-                "Bank Permit File"
-              ),
-            });
+            const url = createDataUrl(
+              item.imagebaseBankPermitfile,
+              "Bank Permit File"
+            );
+            if (url) {
+              grouped[tinNumber].documents.push({
+                label: "Bank Permit File",
+                base64Data: url,
+              });
+            }
           }
           if (item.imageCummercialInvoicefile) {
-            grouped[tinNumber].documents.push({
-              label: "Commercial Invoice File",
-              base64Data: createDataUrl(
-                item.imageCummercialInvoicefile,
-                "Commercial Invoice File"
-              ),
-            });
+            const url = createDataUrl(
+              item.imageCummercialInvoicefile,
+              "Commercial Invoice File"
+            );
+            if (url) {
+              grouped[tinNumber].documents.push({
+                label: "Commercial Invoice File",
+                base64Data: url,
+              });
+            }
           }
         });
 
@@ -256,7 +310,27 @@ export default function CustomFileViewer() {
 
   if (loading) {
     return (
-      <div className="text-center p-6 text-xl text-blue-600">
+      <div className="flex items-center justify-center h-full text-xl text-blue-600">
+        <svg
+          className="animate-spin h-5 w-5 mr-3 text-blue-500"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          ></path>
+        </svg>
         Loading documents...
       </div>
     );
@@ -264,8 +338,51 @@ export default function CustomFileViewer() {
 
   if (error) {
     return (
-      <div className="text-center p-6 text-red-600 border border-red-300 bg-red-50 rounded-md mx-auto max-w-md">
-        Error: {error}
+      <div className="text-center p-6 text-red-600 border border-red-300 bg-red-50 rounded-md mx-auto max-w-md mt-10">
+        <p className="font-bold">Error:</p>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (previewFile) {
+    const isImage = previewFile.url.startsWith("data:image");
+    const isPdf = previewFile.url.startsWith("data:application/pdf");
+
+    return (
+      <div className="p-4 bg-white rounded-lg shadow-lg h-full flex flex-col">
+        <div className="flex items-center gap-4 border-b pb-4 mb-4">
+          <button
+            onClick={handleClosePreview}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-semibold">{previewFile.label} Preview</h2>
+        </div>
+        <div className="flex-grow overflow-auto">
+          {isImage ? (
+            <div className="relative w-full h-full">
+              <Image
+                src={previewFile.url}
+                alt={previewFile.label}
+                fill
+                className="object-contain"
+                unoptimized={true}
+              />
+            </div>
+          ) : isPdf ? (
+            <iframe
+              src={previewFile.url}
+              className="w-full h-full border-none"
+              title={`${previewFile.label} Preview`}
+            />
+          ) : (
+            <p className="text-red-600 text-center py-10">
+              Unsupported format: {previewFile.label}
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -282,11 +399,11 @@ export default function CustomFileViewer() {
       ) : (
         userDocuments.map((user) => (
           <div
-            key={user.tinNumber} // Using tinNumber as the key
+            key={user.tinNumber}
             className="bg-white rounded-lg shadow-lg p-6 mb-6 border border-gray-100"
           >
             <button
-              onClick={() => toggleExpand(user.tinNumber)} // Using tinNumber here
+              onClick={() => toggleExpand(user.tinNumber)}
               className="w-full flex justify-between items-center text-left py-4 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
             >
               <div>
@@ -302,7 +419,7 @@ export default function CustomFileViewer() {
                   User: {user.firstname} {user.lastname}
                 </p>
               </div>
-              <FaChevronDown
+              <ChevronDown
                 className={`text-gray-400 transition-transform duration-300 ${
                   expandedUsers.has(user.tinNumber) ? "rotate-180" : ""
                 }`}
@@ -311,12 +428,13 @@ export default function CustomFileViewer() {
             {expandedUsers.has(user.tinNumber) && (
               <div className="pt-4 border-t mt-4">
                 {user.documents.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6 mt-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
                     {user.documents.map((doc, index) => (
                       <FilePreview
-                        key={`${user.tinNumber}-${doc.label}-${index}`} // Unique key for each document
+                        key={`${user.tinNumber}-${doc.label}-${index}`}
                         label={doc.label}
                         url={doc.base64Data}
+                        onPreviewClick={handleOpenPreview}
                       />
                     ))}
                   </div>
