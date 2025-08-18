@@ -37,7 +37,7 @@ export default function WarehouseFeeForm() {
 
     try {
       const response = await fetch(
-        `https://customreceiptmanagement.onrender.com/api/v1/user/warehousefee/${userId}`,
+        `api.import.linkmerkato.com.et/api/v1/user/warehousefee/${userId}`,
         {
           method: "POST",
           headers: {

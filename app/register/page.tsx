@@ -1,4 +1,5 @@
 "use client";
+const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -51,21 +52,19 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch(
-        "https://customreceiptmanagement.onrender.com/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
+      const response = await fetch(`${BASE_API_URL}/api/v1/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.text();
-      if (!response.ok) throw new Error(data || "Registration failed");
 
-      router.push("/login");
+      if (!response.ok) throw new Error(data || "Registration failed");
+      router.push("/owner");
     } catch (err: any) {
       setError(err.message);
+      alert(err.message);
     } finally {
       setLoading(false);
     }
@@ -89,19 +88,19 @@ export default function RegisterPage() {
             className="grid grid-cols-1 md:grid-cols-2 gap-6"
           >
             {error && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium text-center col-span-full border border-red-100">
+              <div className="p-3 bg-white-50 text-black-600 rounded-lg text-lg font-medium text-center col-span-full border border-red-100">
                 {error}
               </div>
             )}
 
             <div className="col-span-full">
-              <h2 className="text-lg font-semibold text-gray-700 mb-3 flex items-center before:content-[''] before:block before:w-1 before:h-6 before:bg-blue-500 before:mr-2 before:rounded-full">
+              <h2 className="text-lg font-semibold text-black-700 mb-3 flex items-center before:content-[''] before:block before:w-1 before:h-6 before:bg-blue-500 before:mr-2 before:rounded-full">
                 Personal Information
               </h2>
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 First Name
               </label>
               <input
@@ -116,7 +115,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Last Name
               </label>
               <input
@@ -131,7 +130,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Company Name
               </label>
               <input
@@ -146,7 +145,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 TIN Number <span className="text-gray-400">(10 digits)</span>
               </label>
               <input
@@ -170,7 +169,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Email
               </label>
               <input
@@ -185,7 +184,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Phone Number
               </label>
               <input
@@ -206,7 +205,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Wereda
               </label>
               <input
@@ -220,7 +219,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Kebele
               </label>
               <input
@@ -234,7 +233,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Region
               </label>
               <input
@@ -254,7 +253,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Username
               </label>
               <input
@@ -269,7 +268,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-600">
+              <label className="block text-sm font-medium text-black-600">
                 Password
               </label>
               <input

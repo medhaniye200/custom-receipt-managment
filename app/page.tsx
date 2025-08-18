@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // <-- Added for the register button
+import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
-import { FaSpinner } from "react-icons/fa"; // <-- Added for the loading spinner
+import { FaSpinner } from "react-icons/fa";
 
 interface JwtPayload {
   user_id: string;
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,24 +25,40 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch(
-        "https://customreceiptmanagement.onrender.com/api/v1/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
+      const response = await fetch(`${BASE_API_URL}/api/v1/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const textData = await response.text();
+        try {
+          // Try to parse as JSON in case content-type was wrong
+          data = JSON.parse(textData);
+        } catch {
+          // If not JSON, use as plain text
+          data = { message: textData };
         }
-      );
+      }
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.message || "Login failed");
+      if (!response.ok) {
+        throw new Error(
+          data.message || (typeof data === "string" ? data : "Login failed")
+        );
+      }
 
       const token = data.token;
+      if (!token) throw new Error("No token received");
+
       localStorage.setItem("token", token);
-      
+
       const decoded = jwtDecode<JwtPayload>(token);
       const userId = decoded.user_id;
       const roles = decoded.roles;
@@ -50,11 +67,9 @@ export default function LoginPage() {
       localStorage.setItem("roles", JSON.stringify(roles));
 
       // Redirect based on role
-
       if (roles.includes("CLERK")) {
         router.push("/declaration");
       } else if (roles.includes("ACCOUNTANT")) {
-        
         router.push("/accountant-dashboard");
       } else if (roles.includes("USER")) {
         router.push("/owner");
@@ -64,19 +79,19 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.message || "Login failed");
-
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md">
         <div className="bg-white p-8 rounded-xl shadow-2xl space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome Back!
+            </h1>
             <p className="text-gray-500">Log in to your account to continue.</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -86,7 +101,9 @@ export default function LoginPage() {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 sr-only">Username</label>
+              <label className="block text-sm font-medium text-gray-700 sr-only">
+                Username
+              </label>
               <input
                 type="text"
                 value={username}
@@ -97,7 +114,9 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 sr-only">Password</label>
+              <label className="block text-sm font-medium text-gray-700 sr-only">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -123,8 +142,11 @@ export default function LoginPage() {
           </form>
           <div className="text-center text-sm">
             <p className="text-gray-600">
-              Don{"'"}t have an account?{" "}
-              <Link href="/register" className="text-blue-600 hover:underline font-semibold">
+              Don't have an account?{" "}
+              <Link
+                href="/register"
+                className="text-blue-600 hover:underline font-semibold"
+              >
                 Register here
               </Link>
             </p>
