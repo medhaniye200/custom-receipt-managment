@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaChevronDown } from "react-icons/fa";
 import Image from "next/image";
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { BASE_API_URL } from "../../import-api/ImportApi";
 
 interface DocumentFile {
   label: string;

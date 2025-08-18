@@ -1,7 +1,5 @@
 "use client";
-
 import ReceiptUpload from "./ReceiptUpload";
-import WarehouseFileViewer from "./WarehouseFileViewer";
 
 export default function MainLayout() {
   return (
@@ -9,11 +7,6 @@ export default function MainLayout() {
       {/* First Column: Receipt Upload Form */}
       <div className="w-full lg:w-1/3 p-4 border-r border-gray-200 lg:h-screen lg:overflow-y-auto">
         <ReceiptUpload />
-      </div>
-
-      {/* Second Column: Warehouse File Viewer */}
-      <div className="w-full lg:w-2/3 p-4 lg:h-screen lg:overflow-y-auto">
-        <WarehouseFileViewer />
       </div>
     </div>
   );

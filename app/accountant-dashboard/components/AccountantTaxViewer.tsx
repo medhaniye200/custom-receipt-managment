@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { ChevronDown, ChevronUp, Printer, Search } from "lucide-react";
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { BASE_API_URL } from "../../import-api/ImportApi";
 
 interface TaxAmountPerItem {
   dpvAmountPerDeclaration: number | null;

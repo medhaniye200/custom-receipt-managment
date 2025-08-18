@@ -3,7 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useState, FormEvent, ChangeEvent } from "react";
 import { format, parse } from "date-fns";
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { BASE_API_URL } from "../../import-api/ImportApi";
 
 interface ClearanceFeePayload {
   receiptnumber: string;

@@ -1,5 +1,5 @@
 "use client";
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { BASE_API_URL } from "../import-api/ImportApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

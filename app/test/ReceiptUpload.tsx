@@ -1,196 +1,69 @@
 "use client";
+import { useState, useEffect } from "react";
 
-import { useState, FormEvent, ChangeEvent } from "react";
+// const STORAGE_KEY = "myFormDraft";
 
-export default function WarehouseFeeForm() {
-  const [formData, setFormData] = useState({
-    companyName: "",
-    companyTIN: "",
-    amountBeforeTax: "",
-    vat: "",
-    receiptNo: "",
-    receiptMachineNo: "",
-    receiptDate: "",
-  });
+export default function SafeForm() {
+  const [formData, setFormData] = useState({ name: "", email: "" });
+  const [restored, setRestored] = useState(false);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Load saved draft when page loads
+  useEffect(() => {
+    const saved = localStorage.getItem("forms");
+    if (saved) {
+      setFormData(JSON.parse(saved));
+      setRestored(true); // show message that draft was restored
+    }
+  }, []);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  // Save draft locally whenever form changes
+  useEffect(() => {
+    localStorage.setItem("forms", JSON.stringify(formData));
+  }, [formData]);
+
+  // Submit to backend
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const userId = localStorage.getItem("userId");
-
-    if (!userId) {
-      console.error("User ID not found in local storage. Cannot submit form.");
-      alert("Authentication error: User ID is missing. Please log in again.");
-      return;
-    }
-
-    const payload = {
-      ...formData,
-      amountBeforeTax: parseFloat(formData.amountBeforeTax),
-      vat: formData.vat ? parseFloat(formData.vat) : null,
-    };
-
     try {
-      const response = await fetch(
-        `api.import.linkmerkato.com.et/api/v1/user/warehousefee/${userId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      console.log("Success:", data);
-      alert("Warehouse fee submitted successfully!");
-
-      setFormData({
-        companyName: "",
-        companyTIN: "",
-        amountBeforeTax: "",
-        vat: "",
-        receiptNo: "",
-        receiptMachineNo: "",
-        receiptDate: "",
+      await fetch("http://localhost:3001/forms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
-    } catch (error) {
-      console.error("Error submitting warehouse fee:", error);
-
-      if (error instanceof Error) {
-        alert(`Failed to submit warehouse fee. Error: ${error.message}`);
-      } else {
-        // Handle cases where the error is not a standard Error object (e.g., a string or number)
-        alert("Failed to submit warehouse fee. An unknown error occurred.");
-      }
+      alert("Saved to DB ✅");
+      localStorage.removeItem("forms"); // clear draft after saving
+    } catch (err) {
+      alert("Save failed ❌ (but draft is still safe locally)");
     }
   };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-xl bg-white p-6 rounded shadow"
+    <form onSubmit={handleSubmit} className="p-4 border rounded w-80">
+      {restored && (
+        <p className="text-green-600 text-sm mb-2">
+          Draft restored after restart ✅
+        </p>
+      )}
+      <input
+        type="text"
+        placeholder="Name"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        className="border p-2 mb-2 w-full"
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        className="border p-2 mb-2 w-full"
+      />
+      <button
+        type="submit"
+        className="bg-blue-500 text-white px-4 py-2 rounded w-full"
       >
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-          Warehouse Fee Form
-        </h2>
-
-        {/* Company Name */}
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Company Name</label>
-          <input
-            type="text"
-            name="companyName"
-            value={formData.companyName}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="Acme Inc."
-            required
-          />
-        </div>
-
-        {/* Company TIN */}
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Company TIN</label>
-          <input
-            type="text"
-            name="companyTIN"
-            value={formData.companyTIN}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="1234567890"
-            required
-          />
-        </div>
-
-        {/* Amount Before Tax */}
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Amount Before Tax</label>
-          <input
-            type="number"
-            name="amountBeforeTax"
-            value={formData.amountBeforeTax}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="1000.00"
-            required
-          />
-        </div>
-
-        {/* VAT */}
-        <div className="mb-4">
-          <label className="block font-medium mb-1">VAT (if applicable)</label>
-          <input
-            type="number"
-            name="vat"
-            value={formData.vat}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="150.00"
-          />
-        </div>
-
-        {/* Receipt No */}
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Receipt No.</label>
-          <input
-            type="text"
-            name="receiptNo"
-            value={formData.receiptNo}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="R123456"
-            required
-          />
-        </div>
-
-        {/* Receipt Machine No */}
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Receipt Machine No.</label>
-          <input
-            type="text"
-            name="receiptMachineNo"
-            value={formData.receiptMachineNo}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            placeholder="M98765"
-            required
-          />
-        </div>
-
-        {/* Receipt Date */}
-        <div className="mb-6">
-          <label className="block font-medium mb-1">Receipt Date</label>
-          <input
-            type="date"
-            name="receiptDate"
-            value={formData.receiptDate}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded px-3 py-2"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Submit
-        </button>
-      </form>
-    </div>
+        Save to DB
+      </button>
+    </form>
   );
 }

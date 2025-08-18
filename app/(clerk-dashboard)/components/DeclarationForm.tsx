@@ -2,12 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-// Assuming DatePicker and format/parse functions are available from your setup
-// For demonstration, I'm providing dummy implementations if you don't have them
-// If you're using 'react-datepicker' and 'date-fns', ensure they are installed.
-import PreviewModal from "../declaration/preview/PreviewModal"; // Keep your existing modal import
 
-// Dummy DatePicker and date-fns functions if not installed. Replace with actual imports if you have them.
+import PreviewModal from "../declaration/preview/PreviewModal"; // Keep your existing modal import
+import { BASE_API_URL } from "../../import-api/ImportApi";
+
 const DatePicker = (props: any) => (
   <input
     type="date"
@@ -39,8 +37,6 @@ const parse = (dateString: string, fmt: string, baseDate: Date) => {
   }
   return new Date(dateString); // Fallback for other formats
 };
-
-const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // --- Type Definitions ---
 type TaxDto = {

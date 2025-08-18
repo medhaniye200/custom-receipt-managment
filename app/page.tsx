@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
 import { FaSpinner } from "react-icons/fa";
+import { BASE_API_URL } from "./import-api/ImportApi";
 
 interface JwtPayload {
   user_id: string;
@@ -17,7 +18,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const BASE_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
