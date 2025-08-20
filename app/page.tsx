@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
 import { FaSpinner } from "react-icons/fa";
-import { BASE_API_URL } from "./import-api/ImportApi";
+import { BASE_API_URL } from "./(Import-Export-Receipts)/import-api/ImportApi";
 
 interface JwtPayload {
   user_id: string;
   roles: string[];
+  tin_number: string;
 }
 
 export default function LoginPage() {
@@ -62,8 +63,11 @@ export default function LoginPage() {
       const decoded = jwtDecode<JwtPayload>(token);
       const userId = decoded.user_id;
       const roles = decoded.roles;
+      const tinNumber = decoded.tin_number;
 
       localStorage.setItem("userId", userId);
+      localStorage.setItem("tinNumber", tinNumber);
+
       localStorage.setItem("roles", JSON.stringify(roles));
 
       // Redirect based on role

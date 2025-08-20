@@ -16,11 +16,15 @@ interface TaxAmountPerItem {
   vat: number | null;
   withholdingTax: number | null;
 }
-interface ItemInfo {
-  bankServicePerItem: number | null;
+interface companyInfo {
   companyname: string;
   firstname: string;
-  lastanme: string;
+  lastname: string;
+  tinnumber: string;
+}
+interface ItemInfo {
+  bankServicePerItem: number | null;
+
   hscode: string;
   itemdescription: string;
   quantity: number;
@@ -36,6 +40,7 @@ interface TaxData {
   declarationNumber: string;
   grandTotalInETB: number;
   iteminfo: ItemInfo[];
+  companyInfo: companyInfo[];
   totalBankService: number;
   totalTaxPerDeclaration: number;
   totalVatPerDeclaration: number;
@@ -76,8 +81,10 @@ export default function AllTaxViewer() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
+
         const res = await axios.get<TaxData[]>(
-          `${BASE_API_URL}/api/v1/accountant/alltax`,
+          `${BASE_API_URL}/api/v1/accountant/alltax/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -118,7 +125,7 @@ export default function AllTaxViewer() {
   const groupDataByCompany = (data: TaxData[]) => {
     return data.reduce((acc, declaration) => {
       const companyName =
-        declaration.iteminfo[0]?.companyname || "Unknown Company";
+        declaration.companyInfo[0]?.companyname || "Unknown Company";
       if (!acc[companyName]) {
         acc[companyName] = [];
       }
@@ -198,6 +205,10 @@ export default function AllTaxViewer() {
               .tax-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
               .tax-item { border: 1px solid #eee; padding: 8px; border-radius: 4px; font-size: 14px; }
               .tax-label { font-weight: 600; color: #555; }
+              .total-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+              .total-item { border: 1px solid #ddd; padding: 10px; border-radius: 4px; }
+              .total-label { font-weight: bold; margin-bottom: 5px; }
+              .total-value { font-size: 15px; }
               .total-row { font-weight: bold; background-color: #f9f9f9; }
               @media print {
                 body { -webkit-print-color-adjust: exact; }
@@ -209,31 +220,98 @@ export default function AllTaxViewer() {
             <div class="header">
               <div class="declaration-number">Declaration #${declarationNumber}</div>
               <div class="company-name">${
-                declaration.iteminfo[0]?.companyname || "Unknown Company"
+                declaration.companyInfo[0]?.companyname || "Unknown Company"
               }</div>
               <div>${new Date().toLocaleDateString()}</div>
             </div>
 
             <div class="summary-section">
               <div class="section-title">Financial Summary</div>
-              <div class="summary-grid">
-                <div class="summary-card">
-                  <div class="card-title">Totals</div>
-                  <div>Grand Total: ${declaration.grandTotalInETB?.toLocaleString()} ETB</div>
-                  <div>Total Tax: ${declaration.totalTaxPerDeclaration?.toLocaleString()} ETB</div>
-                  <div>Total VAT: ${declaration.totalVatPerDeclaration?.toLocaleString()} ETB</div>
+              
+              <div class="total-grid">
+                <div class="total-item">
+                  <div class="total-label">Grand Total</div>
+                  <div class="total-value">${declaration.grandTotalInETB?.toLocaleString()} ETB</div>
                 </div>
-                <div class="summary-card">
-                  <div class="card-title">Tax Breakdown</div>
-                  <div>Duty Tax: ${declaration.totaldutyTax?.toLocaleString()} ETB</div>
-                  <div>Excise Tax: ${declaration.totalexciseTax?.toLocaleString()} ETB</div>
-                  <div>Social Welfare: ${declaration.totalsocialWelfareTax?.toLocaleString()} ETB</div>
+                
+                <div class="total-item">
+                  <div class="total-label">Total Tax</div>
+                  <div class="total-value">${declaration.totalTaxPerDeclaration?.toLocaleString()} ETB</div>
                 </div>
-                <div class="summary-card">
-                  <div class="card-title">Fees & Charges</div>
-                  <div>Bank Service: ${declaration.totalBankService?.toLocaleString()} ETB</div>
-                  <div>Transit Fee: ${declaration.totalTransitorFee?.toLocaleString()} ETB</div>
-                  <div>Warehouse Fee: ${declaration.totalWareHouseFee?.toLocaleString()} ETB</div>
+                
+                <div class="total-item">
+                  <div class="total-label">Total VAT</div>
+                  <div class="total-value">${declaration.totalVatPerDeclaration?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Bank Service Charge</div>
+                  <div class="total-value">${declaration.totalBankService?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Transitor Fee</div>
+                  <div class="total-value">${declaration.totalTransitorFee?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Transport Fee</div>
+                  <div class="total-value">${declaration.totalTransportFee?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">WareHouse Fee</div>
+                  <div class="total-value">${declaration.totalWareHouseFee?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Total Withholding</div>
+                  <div class="total-value">${declaration.totalWithholding?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">DPV Amount</div>
+                  <div class="total-value">${declaration.totaldpvAmountPerDeclaration?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Duty Tax</div>
+                  <div class="total-value">${declaration.totaldutyTax?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Excise Tax</div>
+                  <div class="total-value">${declaration.totalexciseTax?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Scanning Fee</div>
+                  <div class="total-value">${declaration.totalscanningFee?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Scanning Fee VAT</div>
+                  <div class="total-value">${declaration.totalscanningFeeVAT?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Social Welfare Tax</div>
+                  <div class="total-value">${declaration.totalsocialWelfareTax?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Surtax</div>
+                  <div class="total-value">${declaration.totalsurtax?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">VAT</div>
+                  <div class="total-value">${declaration.totalvat?.toLocaleString()} ETB</div>
+                </div>
+                
+                <div class="total-item">
+                  <div class="total-label">Withholding Tax</div>
+                  <div class="total-value">${declaration.totalwithholdingTax?.toLocaleString()} ETB</div>
                 </div>
               </div>
             </div>
@@ -242,7 +320,7 @@ export default function AllTaxViewer() {
             <table class="items-table">
               <thead>
                 <tr>
-                  <th>Description</th>
+                  <th>Item</th>
                   <th>HS Code</th>
                   <th>Quantity</th>
                   <th>Unit Price</th>

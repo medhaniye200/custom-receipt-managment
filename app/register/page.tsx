@@ -1,5 +1,5 @@
 "use client";
-import { BASE_API_URL } from "../import-api/ImportApi";
+import { BASE_API_URL } from "@/app/(Import-Export-Receipts)/import-api/ImportApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

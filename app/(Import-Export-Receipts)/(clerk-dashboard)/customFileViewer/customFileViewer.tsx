@@ -181,13 +181,15 @@ export default function WarehouseFileViewer() {
       setError(null);
       try {
         const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
+
         if (!token) {
           setError("Authentication token not found.");
           return;
         }
 
         const res = await axios.get<RawWarehouseFile[]>(
-          `${BASE_API_URL}/api/v1/clerk/wareHousefileAll`,
+          `${BASE_API_URL}/api/v1/clerk/CustomDocument/${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
