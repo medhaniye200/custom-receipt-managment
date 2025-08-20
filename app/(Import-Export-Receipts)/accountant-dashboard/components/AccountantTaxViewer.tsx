@@ -40,7 +40,7 @@ interface TaxData {
   declarationNumber: string;
   grandTotalInETB: number;
   iteminfo: ItemInfo[];
-  companyInfo: companyInfo[];
+  companyInfo: companyInfo;
   totalBankService: number;
   totalTaxPerDeclaration: number;
   totalVatPerDeclaration: number;
@@ -92,6 +92,7 @@ export default function AllTaxViewer() {
           }
         );
         setData(res.data);
+        console.log(res.data);
 
         // Initialize filtered data with all data
         const grouped = groupDataByCompany(res.data);
@@ -125,7 +126,7 @@ export default function AllTaxViewer() {
   const groupDataByCompany = (data: TaxData[]) => {
     return data.reduce((acc, declaration) => {
       const companyName =
-        declaration.companyInfo[0]?.companyname || "Unknown Company";
+        declaration.companyInfo?.companyname || "Unknown Company";
       if (!acc[companyName]) {
         acc[companyName] = [];
       }
@@ -220,7 +221,7 @@ export default function AllTaxViewer() {
             <div class="header">
               <div class="declaration-number">Declaration #${declarationNumber}</div>
               <div class="company-name">${
-                declaration.companyInfo[0]?.companyname || "Unknown Company"
+                declaration.companyInfo?.companyname || "Unknown Company"
               }</div>
               <div>${new Date().toLocaleDateString()}</div>
             </div>
@@ -463,7 +464,7 @@ export default function AllTaxViewer() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">
-                  {declarations.length} declaration(s) • Total:{" "}
+                  {declarations.length} declaration(s)
                 </p>
               </div>
             </div>
@@ -527,7 +528,8 @@ export default function AllTaxViewer() {
                       {/* Financial Summary Section with horizontal scroll */}
                       <div className="border-b pb-3">
                         <h3 className="text-sm font-semibold text-gray-800 mb-2">
-                          Financial Summary
+                          Financial Summary for{" "}
+                          {declaration.companyInfo.tinnumber} tin Number
                         </h3>
                         <div className="overflow-x-auto">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 min-w-[800px]">
